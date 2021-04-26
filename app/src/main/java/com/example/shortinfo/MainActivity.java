@@ -2,11 +2,15 @@ package com.example.shortinfo;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.KeyguardManager;
+import android.content.Context;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
+import android.view.WindowManager;
 import android.widget.TextView;
 
 import org.jsoup.Jsoup;
@@ -28,6 +32,17 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1){
+            setShowWhenLocked(true);
+            setTurnScreenOn(true);
+            KeyguardManager keyguardManager = (KeyguardManager)getSystemService(Context.KEYGUARD_SERVICE);
+            keyguardManager.requestDismissKeyguard(this,null);
+        }
+        else{
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED | WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
+        }
+
+
         final Bundle bundle = new Bundle();
 
         textView1 = findViewById(R.id.value1);
@@ -45,7 +60,7 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     doc = Jsoup.connect("https://search.naver.com/search.naver?where=nexearch&sm=top_hty&fbm=1&ie=utf8&query=%EC%BD%94%EB%A1%9C%EB%82%98").get();
                     Log.d("signal","first");
-
+                    
                     Element contents = doc.select("div.status_info li.info_01").select(".info_num").first();
                     Log.d("확진자",contents.text());
                     bundle.putString("confirmed",contents.text());
