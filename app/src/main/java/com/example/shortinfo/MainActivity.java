@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.KeyguardManager;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -41,8 +42,12 @@ public class MainActivity extends AppCompatActivity {
         else{
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED | WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
         }
+//        getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
+//                | WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
+        Intent intent = new Intent(getApplicationContext(),ScreenService.class);
+        startService(intent);
 
-
+        //stopService(intent); // 잠금화면에 대한 서비스 중지
         final Bundle bundle = new Bundle();
 
         textView1 = findViewById(R.id.value1);

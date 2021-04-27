@@ -16,6 +16,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <receiver android:name=".ScreenReceiver"/>
+        <service android:name=".ScreenService"/>
+
     </application>
     <uses-permission android:name="android.permission.INTERNET"/>
 </manifest>
