@@ -2,83 +2,127 @@ package com.example.shortinfo;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.app.KeyguardManager;
-import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-import android.os.PowerManager;
-import android.provider.Settings;
 import android.util.Log;
-import android.view.View;
-import android.view.Window;
 import android.view.WindowManager;
-import android.widget.Button;
 import android.widget.TextView;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 
 public class MainActivity extends AppCompatActivity {
+    public StringBuilder str;
+    TextView textView1;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
-//        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1){
-//            setShowWhenLocked(true);
-//            setTurnScreenOn(true);
-//            KeyguardManager keyguardManager = (KeyguardManager)getSystemService(Context.KEYGUARD_SERVICE);
-//            keyguardManager.requestDismissKeyguard(this,null);
-//        }
-//        else{
-//            getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED | WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
-//        }
-//        getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
-//                | WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
-
-
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
+                WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON |
+                WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
         setContentView(R.layout.activity_main);
 
-        //Intent intent = new Intent(getApplicationContext(),ScreenService.class);
-        //startService(intent);
-
-        //stopService(intent); // 잠금화면에 대한 서비스 중지
-
-        Button onBtn = findViewById(R.id.on_btn);
-        Button offBtn = findViewById(R.id.off_btn);
-
-        PowerManager powerManager = (PowerManager)getApplicationContext().getSystemService(POWER_SERVICE);
-        boolean isWhiteListing = false;
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
-            isWhiteListing = powerManager.isIgnoringBatteryOptimizations(getApplicationContext().getPackageName());
-        }
-        if(!isWhiteListing){
-            Intent intent = new Intent();
-            intent.setAction(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
-            intent.setData(Uri.parse("package:"+getApplicationContext().getPackageName()));
-            startActivity(intent);
-        }
-        onBtn.setOnClickListener(new View.OnClickListener() {
+        Intent intent = new Intent(getApplicationContext(), ScreenService.class);
+        startService(intent);
+        final Bundle bundle = new Bundle();
+        textView1 = findViewById(R.id.corona_text);
+//        textView2 = findViewById(R.id.value2);
+//        textView3 = findViewById(R.id.value3);
+//        textView4 = findViewById(R.id.value4);
+//        textView5 = findViewById(R.id.value5);
+//        textView6 = findViewById(R.id.value6);
+//        textView7 = findViewById(R.id.value7);
+//        textView8 = findViewById(R.id.value8);
+        new Thread(){
             @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(getApplicationContext(), ScreenService.class);
-                startService(intent);
+            public void run(){
+                Document doc = null;
+                try {
+                    doc = Jsoup.connect("https://search.naver.com/search.naver?where=nexearch&sm=top_hty&fbm=1&ie=utf8&query=%EC%BD%94%EB%A1%9C%EB%82%98").get();
+                    Log.d("signal","first");
+
+                    Element contents = doc.select("div.status_info li.info_01").select(".info_num").first();
+                    Log.d("확진자",contents.text());
+                    bundle.putString("confirmed",contents.text());
+
+                    contents = doc.select("div.status_info li.info_01").select("em.info_variation").first();
+                    Log.d("▲",contents.text());
+                    bundle.putString("confirmed_var",contents.text());
+
+                    contents = doc.select("div.status_info li.info_02").select(".info_num").first();
+                    Log.d("검사중",contents.text());
+                    bundle.putString("inspection",contents.text());
+
+                    contents = doc.select("div.status_info li.info_02").select("em.info_variation").first();
+                    Log.d("▼",contents.text());
+                    bundle.putString("inspection_var",contents.text());
+
+
+                    contents = doc.select("div.status_info li.info_03").select(".info_num").first();
+                    Log.d("격리해제",contents.text());
+                    bundle.putString("release",contents.text());
+
+                    contents = doc.select("div.status_info li.info_03").select("em.info_variation").first();
+                    Log.d("▲",contents.text());
+                    bundle.putString("release_var",contents.text());
+
+
+                    contents = doc.select("div.status_info li.info_04").select(".info_num").first();
+                    Log.d("사망자",contents.text());
+                    bundle.putString("dead",contents.text());
+
+
+                    contents = doc.select("div.status_info li.info_04").select("em.info_variation").first();
+                    Log.d("▲",contents.text());
+                    bundle.putString("dead_var",contents.text());
+
+                    contents = doc.select("div.status_info.abroad_info li.info_01").select(".info_num").first();
+                    Log.d("전 세계 확진자",contents.text());
+
+                    contents = doc.select("div.status_info.abroad_info li.info_01").select("em.info_variation").first();
+                    Log.d("▲",contents.text());
+
+                    //bundle.putString("numbers",str.toString());
+                    Message msg = handler.obtainMessage();
+                    msg.setData(bundle);
+                    handler.sendMessage(msg);
+                }
+                catch (Exception e){
+                    Log.e("error",e.getMessage());
+                }
             }
-        });
-        offBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(getApplicationContext(), ScreenService.class);
-                stopService(intent);
-            }
-        });
+        }.start();
     }
+    Handler handler = new Handler(Looper.getMainLooper()){
+        @Override
+        public void handleMessage(Message msg){
+            str = new StringBuilder("확진자 : "+msg.getData().getString("confirmed"));
+            str.append("\n▲"+msg.getData().getString("confirmed_var"));
+            str.append("\n검사중 : "+msg.getData().getString("inspection"));
+            str.append("\n▼"+msg.getData().getString("inspection_var"));
+            str.append("\n격리해제 : "+msg.getData().getString("release"));
+            str.append("\n▲"+msg.getData().getString("release_var"));
+            str.append("\n사망자 : "+msg.getData().getString("dead"));
+            str.append("\n▲"+msg.getData().getString("dead_var"));
+//            textView2.setText("▲"+msg.getData().getString("confirmed_var"));
+//            textView3.setText("검사중 : "+msg.getData().getString("inspection"));
+//            textView4.setText("▼"+msg.getData().getString("inspection_var"));
+//            textView5.setText("격리해제 : "+msg.getData().getString("release"));
+//            textView6.setText("▲"+msg.getData().getString("release_var"));
+//            textView7.setText("사망자 : "+msg.getData().getString("dead"));
+//            textView8.setText("▲"+msg.getData().getString("dead_var"));
+            textView1.setText(str.toString());
+        }
+    };
 
-
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+    }
 }
