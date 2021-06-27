@@ -17,15 +17,18 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
     public StringBuilder str;
-    TextView textView1;
-    TextView textView2;
-    TextView textView3;
-    TextView textView4;
-    TextView textView5;
-    TextView textView6;
+    private TextView textView1;
+    private TextView textView2;
+    private TextView textView3;
+    private TextView textView4;
+    private TextView textView5;
+    private TextView textView6;
+    private ArrayList<String> distanceList;
+    private int defaultRegionNumber = 8; //경기도
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,9 +39,13 @@ public class MainActivity extends AppCompatActivity {
                 WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
         setContentView(R.layout.activity_main);
 
+        distanceList = new ArrayList<>();
+
         Intent intent = new Intent(getApplicationContext(), ScreenService.class);
         startService(intent);
+
         final Bundle bundle = new Bundle();
+
         textView1 = findViewById(R.id.corona_text_confirmed);
         textView2 = findViewById(R.id.corona_text_release);
         textView3 = findViewById(R.id.corona_text_dead);
@@ -48,19 +55,43 @@ public class MainActivity extends AppCompatActivity {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                Document doc2 = null;
+                Document coronaUrl = null;
                 try {
-                    doc2 = Jsoup.connect("http://ncov.mohw.go.kr/").get();
-                    Element ele = doc2.select("div#step_map_city1 p.rssd_descript").first();
-                    Log.d("▲", ele.text());
+                    coronaUrl = Jsoup.connect("http://ncov.mohw.go.kr/regSocdisBoardView.do?brdId=6&brdGubun=68&ncvContSeq=495").get();
+
+                    Elements scripts = coronaUrl.getElementsByTag("script");
+                    for(Element e : scripts){
+                        if(e.data().contains("RSS_DATA")){
+                            int idx_begin = e.data().indexOf("RSS_DATA");
+                            String front = e.data().substring(idx_begin);
+
+                            int idx_end = front.indexOf(";");
+
+                            String cutStr = front.substring(0,idx_end+1);
+                            cutStr = cutStr.replaceAll(" ","");
+                            cutStr = cutStr.replace("\n","");
+
+                            String[] temp = cutStr.split("\\{");
+
+                            // index 0번은 "RSS_DATA = [" 이기 때문에 index 1번부터
+                            for(int i=1; i<temp.length; ++i){
+                                int be = temp[i].indexOf("-");
+                                int end = temp[i].substring(be).indexOf("}");
+
+                                String endStr = temp[i].substring(be, be+end);
+                                endStr = endStr.replace("'","");
+                                endStr = endStr.replaceAll("<br/>","");
+                                distanceList.add(endStr);
+                            }
+                            break;
+                        }
+                    }
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-
-                //bundle.putString("vaccine_status", elements.text());
             }
         }).start();
-        /*
+
         new Thread() {
             @Override
             public void run() {
@@ -126,16 +157,6 @@ public class MainActivity extends AppCompatActivity {
                     Log.d("백신", elements.text());
                     bundle.putString("domestic_vaccine", elements.text());
 
-                    elements = doc.select("div.social_distancing_map._patients_map");
-//                    contents = doc.select("div.city_info_box").select("p.city_desc").first();
-                    int j = 0;
-                    for(Element e : elements){
-                        Log.d("a"+(j++),e.text());
-                    }
-
-
-
-                    //bundle.putString("numbers",str.toString());
                     Message msg = handler.obtainMessage();
                     msg.setData(bundle);
                     handler.sendMessage(msg);
@@ -145,7 +166,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }.start();
 
-         */
     }
 
     Handler handler = new Handler(Looper.getMainLooper()) {
@@ -171,6 +191,7 @@ public class MainActivity extends AppCompatActivity {
             textView3.setText("사망자 →" + msg.getData().getString("dead") + " ▲" + msg.getData().getString("dead_var"));
             textView4.setText("집계 기준 시간 → " + msg.getData().getString("today_std_time"));
             textView5.setText(msg.getData().getString("domestic_vaccine"));
+            textView6.setText("거리두기" +distanceList.get(defaultRegionNumber));
         }
     };
 
@@ -178,4 +199,5 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
     }
+
 }
