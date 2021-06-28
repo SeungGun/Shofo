@@ -21,14 +21,18 @@ import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
     public StringBuilder str;
-    private TextView textView1;
-    private TextView textView2;
-    private TextView textView3;
-    private TextView textView4;
-    private TextView textView5;
-    private TextView textView6;
+    private TextView confirmedText;
+    private TextView confirmedVarText;
+    private TextView confirmedDetailText;
+    private TextView releaseText;
+    private TextView releaseVarText;
+    private TextView deadText;
+    private TextView deadVarText;
+    private TextView stdDateText;
+    private TextView vaccineText;
+    private TextView distancingText;
     private ArrayList<String> distanceList;
-    private int defaultRegionNumber = 8; //경기도
+    private static final int defaultRegionNumber = 8; //경기도
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,12 +50,16 @@ public class MainActivity extends AppCompatActivity {
 
         final Bundle bundle = new Bundle();
 
-        textView1 = findViewById(R.id.corona_text_confirmed);
-        textView2 = findViewById(R.id.corona_text_release);
-        textView3 = findViewById(R.id.corona_text_dead);
-        textView4 = findViewById(R.id.corona_std_date);
-        textView5 = findViewById(R.id.corona_text_vaccine);
-        textView6 = findViewById(R.id.corona_text_distancing);
+        confirmedText = findViewById(R.id.corona_text_confirmed);
+        confirmedVarText = findViewById(R.id.corona_text_confirmed_var);
+        confirmedDetailText = findViewById(R.id.corona_text_confirmed_detail);
+        releaseText = findViewById(R.id.corona_text_release);
+        releaseVarText = findViewById(R.id.corona_text_release_var);
+        deadText = findViewById(R.id.corona_text_dead);
+        deadVarText = findViewById(R.id.corona_text_dead_var);
+        stdDateText = findViewById(R.id.corona_std_date);
+        vaccineText = findViewById(R.id.corona_text_vaccine);
+        distancingText = findViewById(R.id.corona_text_distancing);
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -184,27 +192,16 @@ public class MainActivity extends AppCompatActivity {
     Handler handler = new Handler(Looper.getMainLooper()) {
         @Override
         public void handleMessage(Message msg) {
-            str = new StringBuilder("확진자 : " + msg.getData().getString("confirmed"));
-            str.append("\n▲" + msg.getData().getString("confirmed_var"));
-            str.append("\n검사중 : " + msg.getData().getString("inspection"));
-            str.append("\n▼" + msg.getData().getString("inspection_var"));
-            str.append("\n격리해제 : " + msg.getData().getString("release"));
-            str.append("\n▲" + msg.getData().getString("release_var"));
-            str.append("\n사망자 : " + msg.getData().getString("dead"));
-            str.append("\n▲" + msg.getData().getString("dead_var"));
-//            textView2.setText("▲"+msg.getData().getString("confirmed_var"));
-//            textView3.setText("검사중 : "+msg.getData().getString("inspection"));
-//            textView4.setText("▼"+msg.getData().getString("inspection_var"));
-//            textView5.setText("격리해제 : "+msg.getData().getString("release"));
-//            textView6.setText("▲"+msg.getData().getString("release_var"));
-//            textView7.setText("사망자 : "+msg.getData().getString("dead"));
-//            textView8.setText("▲"+msg.getData().getString("dead_var"));
-            textView1.setText("확진자 → " + msg.getData().getString("confirmed") + " ▲" + msg.getData().getString("confirmed_var") + "\n(국내: " + msg.getData().getString("today_domestic") + " , 해외: " + msg.getData().getString("today_abroad") + ")");
-            textView2.setText("격리해제 → " + msg.getData().getString("release") + " ▲ " + msg.getData().getString("release_var"));
-            textView3.setText("사망자 → " + msg.getData().getString("dead") + " ▲ " + msg.getData().getString("dead_var"));
-            textView4.setText("※ 집계 기준 시간 " + msg.getData().getString("today_std_time"));
-            textView5.setText("백신 접종 → \n"+msg.getData().getString("domestic_vaccine"));
-            textView6.setText("거리두기 " +distanceList.get(defaultRegionNumber));
+            confirmedText.setText("확진자 → " + msg.getData().getString("confirmed"));
+            confirmedVarText.setText( " ▲ " + msg.getData().getString("confirmed_var"));
+            confirmedDetailText.setText("(국내: " + msg.getData().getString("today_domestic") + " , 해외: " + msg.getData().getString("today_abroad") + ")");
+            releaseText.setText("격리해제 → " + msg.getData().getString("release"));
+            releaseVarText.setText(" ▲ " + msg.getData().getString("release_var"));
+            deadText.setText("사망자 → " + msg.getData().getString("dead"));
+            deadVarText.setText( " ▲ " + msg.getData().getString("dead_var"));
+            stdDateText.setText("※ 집계 기준 시간 " + msg.getData().getString("today_std_time"));
+            vaccineText.setText("백신 접종 → \n"+msg.getData().getString("domestic_vaccine"));
+            distancingText.setText("※ 거리두기 " +distanceList.get(defaultRegionNumber));
         }
     };
 
