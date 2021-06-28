@@ -1,13 +1,21 @@
 package com.example.shortinfo;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.WindowManager;
 import android.widget.TextView;
 
@@ -43,6 +51,8 @@ public class MainActivity extends AppCompatActivity {
                 WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
         setContentView(R.layout.activity_main);
 
+
+        getSupportActionBar().setTitle("Short Information");
         distanceList = new ArrayList<>();
 
         Intent intent = new Intent(getApplicationContext(), ScreenService.class);
@@ -210,4 +220,32 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.action_menu,menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        switch (item.getItemId()){
+            case R.id.distance_location:
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setTitle("거리두기 지역 설정");
+                builder.setItems(R.array.Region, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        String[] items = getResources().getStringArray(R.array.Region);
+                        int[] indexItems = getResources().getIntArray(R.array.Region_index);
+                        distancingText.setText("※ 거리두기 " +distanceList.get(indexItems[which]));
+
+                    }
+                });
+                AlertDialog alertDialog = builder.create();
+                alertDialog.show();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
 }

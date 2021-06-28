@@ -147,7 +147,7 @@
                 android:layout_height="wrap_content"
                 android:textSize="9.5pt"
                 android:textStyle="bold"
-                android:textColor="#000000"
+                android:textColor="#41A541"
                 android:padding="6dp"/>
         </LinearLayout>
 
