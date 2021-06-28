@@ -75,13 +75,17 @@ public class MainActivity extends AppCompatActivity {
 
                             // index 0번은 "RSS_DATA = [" 이기 때문에 index 1번부터
                             for(int i=1; i<temp.length; ++i){
-                                int be = temp[i].indexOf("-");
-                                int end = temp[i].substring(be).indexOf("}");
+                                int be = temp[i].indexOf("-"); // -부터
+                                int end = temp[i].substring(be).indexOf("}"); // }까지 구분하기 위한 index 구하기
 
                                 String endStr = temp[i].substring(be, be+end);
-                                endStr = endStr.replace("'","");
-                                endStr = endStr.replaceAll("<br/>","");
-                                distanceList.add(endStr);
+                                endStr = endStr.replace("'",""); // ' 제거
+                                endStr = endStr.replaceAll("<br/>",""); // <br/> 제거
+
+                                String first = endStr.substring(0,3);
+                                String second = endStr.substring(3);
+                                String complete = first + " " + second;
+                                distanceList.add(complete);
                             }
                             break;
                         }
@@ -155,7 +159,16 @@ public class MainActivity extends AppCompatActivity {
 
                     elements = doc.select("div.vaccine_status_item_inner");
                     Log.d("백신", elements.text());
-                    bundle.putString("domestic_vaccine", elements.text());
+                    String tmp ="";
+                    boolean flag = false;
+                    for(Element e : elements){
+                        tmp += e.text().substring(0, e.text().length() - 2);
+                        if(!flag) {
+                            tmp += "\n";
+                            flag = true;
+                        }
+                    }
+                    bundle.putString("domestic_vaccine", tmp);
 
                     Message msg = handler.obtainMessage();
                     msg.setData(bundle);
@@ -186,12 +199,12 @@ public class MainActivity extends AppCompatActivity {
 //            textView6.setText("▲"+msg.getData().getString("release_var"));
 //            textView7.setText("사망자 : "+msg.getData().getString("dead"));
 //            textView8.setText("▲"+msg.getData().getString("dead_var"));
-            textView1.setText("확진자 →" + msg.getData().getString("confirmed") + " ▲" + msg.getData().getString("confirmed_var") + " (국내: " + msg.getData().getString("today_domestic") + " , 해외: " + msg.getData().getString("today_abroad") + ")");
-            textView2.setText("격리해제 →" + msg.getData().getString("release") + " ▲" + msg.getData().getString("release_var"));
-            textView3.setText("사망자 →" + msg.getData().getString("dead") + " ▲" + msg.getData().getString("dead_var"));
-            textView4.setText("집계 기준 시간 → " + msg.getData().getString("today_std_time"));
-            textView5.setText(msg.getData().getString("domestic_vaccine"));
-            textView6.setText("거리두기" +distanceList.get(defaultRegionNumber));
+            textView1.setText("확진자 → " + msg.getData().getString("confirmed") + " ▲" + msg.getData().getString("confirmed_var") + "\n(국내: " + msg.getData().getString("today_domestic") + " , 해외: " + msg.getData().getString("today_abroad") + ")");
+            textView2.setText("격리해제 → " + msg.getData().getString("release") + " ▲ " + msg.getData().getString("release_var"));
+            textView3.setText("사망자 → " + msg.getData().getString("dead") + " ▲ " + msg.getData().getString("dead_var"));
+            textView4.setText("※ 집계 기준 시간 " + msg.getData().getString("today_std_time"));
+            textView5.setText("백신 접종 → \n"+msg.getData().getString("domestic_vaccine"));
+            textView6.setText("거리두기 " +distanceList.get(defaultRegionNumber));
         }
     };
 

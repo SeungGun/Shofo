@@ -15,6 +15,15 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="코로나"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:textSize="13pt"
+            android:layout_marginLeft="15dp"
+            android:layout_marginTop="6dp"/>
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -25,18 +34,34 @@
                 android:id="@+id/corona_std_date"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="11pt"
+                android:textSize="9pt"
                 android:textStyle="bold"
                 android:textColor="#000000"
                 android:padding="6dp"/>
-            <TextView
-                android:id="@+id/corona_text_confirmed"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textSize="11pt"
-                android:textStyle="bold"
-                android:textColor="#000000"
-                android:padding="6dp"/>
+                android:orientation="vertical"
+                android:background="@drawable/sector_inner_design"
+                android:layout_margin="5dp"
+                >
+                <TextView
+                    android:id="@+id/corona_text_confirmed"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="11pt"
+                    android:textStyle="bold"
+                    android:textColor="#000000"
+                    android:padding="6dp"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/sector_inner_design"
+                android:layout_margin="5dp"
+                >
             <TextView
                 android:id="@+id/corona_text_release"
                 android:layout_width="wrap_content"
@@ -45,6 +70,14 @@
                 android:textStyle="bold"
                 android:textColor="#000000"
                 android:padding="6dp"/>
+            </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/sector_inner_design"
+                android:layout_margin="5dp"
+                >
             <TextView
                 android:id="@+id/corona_text_dead"
                 android:layout_width="wrap_content"
@@ -53,24 +86,42 @@
                 android:textStyle="bold"
                 android:textColor="#000000"
                 android:padding="6dp"/>
+            </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/sector_inner_design"
+                android:layout_margin="5dp"
+                >
             <TextView
                 android:id="@+id/corona_text_vaccine"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="11pt"
+                android:textSize="10pt"
                 android:textStyle="bold"
                 android:textColor="#000000"
                 android:padding="6dp"/>
+            </LinearLayout>
             <TextView
                 android:id="@+id/corona_text_distancing"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="11pt"
+                android:textSize="10pt"
                 android:textStyle="bold"
                 android:textColor="#000000"
                 android:padding="6dp"/>
         </LinearLayout>
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="날씨"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:textSize="13pt"
+            android:layout_marginLeft="15dp"
+            android:layout_marginTop="3dp"/>
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -85,6 +136,15 @@
                 android:padding="6dp"/>
         </LinearLayout>
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="환율"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:textSize="13pt"
+            android:layout_marginLeft="15dp"
+            android:layout_marginTop="3dp"/>
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -98,6 +158,15 @@
                 android:textColor="#000000"
                 android:padding="6dp"/>
         </LinearLayout>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="실시간 이슈"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:textSize="13pt"
+            android:layout_marginLeft="15dp"
+            android:layout_marginTop="3dp"/>
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
