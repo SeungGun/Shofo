@@ -1,14 +1,11 @@
 package com.example.shortinfo;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -28,7 +25,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
-    public StringBuilder str;
     private TextView confirmedText;
     private TextView confirmedVarText;
     private TextView confirmedDetailText;
@@ -37,10 +33,13 @@ public class MainActivity extends AppCompatActivity {
     private TextView deadText;
     private TextView deadVarText;
     private TextView stdDateText;
-    private TextView vaccineText;
+    private TextView vaccineFirstText;
     private TextView distancingText;
+    private TextView vaccineSecondText;
     private ArrayList<String> distanceList;
     private static final int defaultRegionNumber = 8; //경기도
+    private String[] vaccineFirst;
+    private String[] vaccineSecond;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,7 +49,6 @@ public class MainActivity extends AppCompatActivity {
                 WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON |
                 WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
         setContentView(R.layout.activity_main);
-
 
         getSupportActionBar().setTitle("Short Information");
         distanceList = new ArrayList<>();
@@ -68,8 +66,10 @@ public class MainActivity extends AppCompatActivity {
         deadText = findViewById(R.id.corona_text_dead);
         deadVarText = findViewById(R.id.corona_text_dead_var);
         stdDateText = findViewById(R.id.corona_std_date);
-        vaccineText = findViewById(R.id.corona_text_vaccine);
+        vaccineFirstText = findViewById(R.id.corona_text_vaccine_first);
+        vaccineSecondText = findViewById(R.id.corona_text_vaccine_second);
         distancingText = findViewById(R.id.corona_text_distancing);
+
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -120,73 +120,68 @@ public class MainActivity extends AppCompatActivity {
                 Document doc = null;
                 try {
                     doc = Jsoup.connect("https://search.naver.com/search.naver?where=nexearch&sm=top_hty&fbm=1&ie=utf8&query=%EC%BD%94%EB%A1%9C%EB%82%98").get();
-                    Log.d("signal", "first");
 
                     Element contents = doc.select("div.status_info li.info_01").select(".info_num").first();
-                    Log.d("확진자", contents.text());
                     bundle.putString("confirmed", contents.text());
 
                     contents = doc.select("div.status_info li.info_01").select("em.info_variation").first();
-                    Log.d("▲", contents.text());
                     bundle.putString("confirmed_var", contents.text());
 
                     contents = doc.select("div.status_info li.info_02").select(".info_num").first();
-                    Log.d("검사중", contents.text());
                     bundle.putString("inspection", contents.text());
 
                     contents = doc.select("div.status_info li.info_02").select("em.info_variation").first();
-                    Log.d("▼", contents.text());
                     bundle.putString("inspection_var", contents.text());
 
-
                     contents = doc.select("div.status_info li.info_03").select(".info_num").first();
-                    Log.d("격리해제", contents.text());
                     bundle.putString("release", contents.text());
 
                     contents = doc.select("div.status_info li.info_03").select("em.info_variation").first();
-                    Log.d("▲", contents.text());
                     bundle.putString("release_var", contents.text());
 
 
                     contents = doc.select("div.status_info li.info_04").select(".info_num").first();
-                    Log.d("사망자", contents.text());
                     bundle.putString("dead", contents.text());
 
 
                     contents = doc.select("div.status_info li.info_04").select("em.info_variation").first();
-                    Log.d("▲", contents.text());
                     bundle.putString("dead_var", contents.text());
 
-                    contents = doc.select("div.status_info.abroad_info li.info_01").select(".info_num").first();
-                    Log.d("전 세계 확진자", contents.text());
-
-                    contents = doc.select("div.status_info.abroad_info li.info_01").select("em.info_variation").first();
-                    Log.d("▲", contents.text());
+//                    contents = doc.select("div.status_info.abroad_info li.info_01").select(".info_num").first();
+//                    Log.d("전 세계 확진자", contents.text());
+//                    contents = doc.select("div.status_info.abroad_info li.info_01").select("em.info_variation").first();
+//                    Log.d("▲", contents.text());
 
                     contents = doc.select("div.status_today li.info_02").select("em.info_num").first();
-                    Log.d("▲", contents.text());
                     bundle.putString("today_domestic", contents.text());
 
                     contents = doc.select("div.status_today li.info_03").select("em.info_num").first();
-                    Log.d("▲", contents.text());
                     bundle.putString("today_abroad", contents.text());
 
                     Elements elements = doc.select("div.csp_infoCheck_area._togglor_root a.info_text._trigger");
-                    Log.d("time", elements.select("span._update_time").text());
                     bundle.putString("today_std_time", elements.select("span._update_time").text());
 
                     elements = doc.select("div.vaccine_status_item_inner");
-                    Log.d("백신", elements.text());
-                    String tmp ="";
+
                     boolean flag = false;
                     for(Element e : elements){
-                        tmp += e.text().substring(0, e.text().length() - 2);
                         if(!flag) {
-                            tmp += "\n";
+                            vaccineFirst = e.text().split(" ");
                             flag = true;
                         }
+                        else{
+                            vaccineSecond = e.text().split(" ");
+                        }
                     }
-                    bundle.putString("domestic_vaccine", tmp);
+                    //[0] ~ [2] : 전국 n차 접종
+                    //[3] : n%
+                    //[4] : 누적n + 명
+                    //[5] : 신규n증가 - 증가 + 명
+                    String firstVacc = processVaccineFirst(vaccineFirst);
+                    String secondVacc = processVaccineFirst(vaccineSecond);
+
+                    bundle.putString("domestic_vaccine_first", firstVacc);
+                    bundle.putString("domestic_vaccine_second",secondVacc);
 
                     Message msg = handler.obtainMessage();
                     msg.setData(bundle);
@@ -197,6 +192,14 @@ public class MainActivity extends AppCompatActivity {
             }
         }.start();
 
+    }
+
+    private String processVaccineFirst(String[] vaccineFirst) {
+        String title = vaccineFirst[0] + " " + vaccineFirst[1] + " " + vaccineFirst[2] + " : ";
+        String percent = vaccineFirst[3] + " , ";
+        String cumul = vaccineFirst[4].substring(0,2) + " " + vaccineFirst[4].substring(2) + "명 / ";
+        String newer = vaccineFirst[5].substring(0,2) + " " +vaccineFirst[5].substring(2, vaccineFirst[5].length() - 2) + "명";
+        return title + percent +"\n " + cumul + newer;
     }
 
     Handler handler = new Handler(Looper.getMainLooper()) {
@@ -210,15 +213,11 @@ public class MainActivity extends AppCompatActivity {
             deadText.setText("사망자 → " + msg.getData().getString("dead"));
             deadVarText.setText( " ▲ " + msg.getData().getString("dead_var"));
             stdDateText.setText("※ 집계 기준 시간 " + msg.getData().getString("today_std_time"));
-            vaccineText.setText("백신 접종 → \n"+msg.getData().getString("domestic_vaccine"));
+            vaccineFirstText.setText(msg.getData().getString("domestic_vaccine_first"));
+            vaccineSecondText.setText(msg.getData().getString("domestic_vaccine_second"));
             distancingText.setText("※ 거리두기 " +distanceList.get(defaultRegionNumber));
         }
     };
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -235,10 +234,8 @@ public class MainActivity extends AppCompatActivity {
                 builder.setItems(R.array.Region, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        String[] items = getResources().getStringArray(R.array.Region);
                         int[] indexItems = getResources().getIntArray(R.array.Region_index);
                         distancingText.setText("※ 거리두기 " +distanceList.get(indexItems[which]));
-
                     }
                 });
                 AlertDialog alertDialog = builder.create();
