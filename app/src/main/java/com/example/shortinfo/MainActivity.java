@@ -38,6 +38,8 @@ public class MainActivity extends AppCompatActivity {
     private TextView vaccineSecondText;
     private ArrayList<String> distanceList;
     private static final int defaultRegionNumber = 8; //경기도
+    private TextView worldConfirmedText;
+    private TextView worldConfirmedVarText;
     private String[] vaccineFirst;
     private String[] vaccineSecond;
 
@@ -69,6 +71,8 @@ public class MainActivity extends AppCompatActivity {
         vaccineFirstText = findViewById(R.id.corona_text_vaccine_first);
         vaccineSecondText = findViewById(R.id.corona_text_vaccine_second);
         distancingText = findViewById(R.id.corona_text_distancing);
+        worldConfirmedText = findViewById(R.id.corona_text_world);
+        worldConfirmedVarText = findViewById(R.id.corona_text_world_var);
 
         new Thread(new Runnable() {
             @Override
@@ -108,6 +112,7 @@ public class MainActivity extends AppCompatActivity {
                             break;
                         }
                     }
+
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -147,9 +152,11 @@ public class MainActivity extends AppCompatActivity {
                     contents = doc.select("div.status_info li.info_04").select("em.info_variation").first();
                     bundle.putString("dead_var", contents.text());
 
-//                    contents = doc.select("div.status_info.abroad_info li.info_01").select(".info_num").first();
+                    contents = doc.select("div.status_info.abroad_info li.info_01").select(".info_num").first();
+                    bundle.putString("world",contents.text());
 //                    Log.d("전 세계 확진자", contents.text());
-//                    contents = doc.select("div.status_info.abroad_info li.info_01").select("em.info_variation").first();
+                    contents = doc.select("div.status_info.abroad_info li.info_01").select("em.info_variation").first();
+                    bundle.putString("world_var",contents.text());
 //                    Log.d("▲", contents.text());
 
                     contents = doc.select("div.status_today li.info_02").select("em.info_num").first();
@@ -161,7 +168,7 @@ public class MainActivity extends AppCompatActivity {
                     Elements elements = doc.select("div.csp_infoCheck_area._togglor_root a.info_text._trigger");
                     bundle.putString("today_std_time", elements.select("span._update_time").text());
 
-                    elements = doc.select("div.vaccine_status_item_inner");
+                    /*elements = doc.select("div.vaccine_status_item_inner");
 
                     boolean flag = false;
                     for(Element e : elements){
@@ -182,7 +189,7 @@ public class MainActivity extends AppCompatActivity {
 
                     bundle.putString("domestic_vaccine_first", firstVacc);
                     bundle.putString("domestic_vaccine_second",secondVacc);
-
+                    */
                     Message msg = handler.obtainMessage();
                     msg.setData(bundle);
                     handler.sendMessage(msg);
@@ -213,9 +220,11 @@ public class MainActivity extends AppCompatActivity {
             deadText.setText("사망자 → " + msg.getData().getString("dead"));
             deadVarText.setText( " ▲ " + msg.getData().getString("dead_var"));
             stdDateText.setText("※ 집계 기준 시간 " + msg.getData().getString("today_std_time"));
-            vaccineFirstText.setText(msg.getData().getString("domestic_vaccine_first"));
-            vaccineSecondText.setText(msg.getData().getString("domestic_vaccine_second"));
+//            vaccineFirstText.setText(msg.getData().getString("domestic_vaccine_first"));
+//            vaccineSecondText.setText(msg.getData().getString("domestic_vaccine_second"));
             distancingText.setText("※ 거리두기 " +distanceList.get(defaultRegionNumber));
+            worldConfirmedText.setText(" → "+msg.getData().getString("world"));
+            worldConfirmedVarText.setText(" ▲ "+msg.getData().getString("world_var"));
         }
     };
 
