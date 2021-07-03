@@ -13,7 +13,10 @@ import android.os.Message;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import org.jsoup.Jsoup;
@@ -273,6 +276,28 @@ public class MainActivity extends AppCompatActivity {
                 });
                 AlertDialog alertDialog = builder.create();
                 alertDialog.show();
+                return true;
+            case R.id.weather_location:
+                FrameLayout container = new FrameLayout(this);
+                FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                params.leftMargin = getResources().getDimensionPixelSize(R.dimen.dialog_margin);
+                params.rightMargin = getResources().getDimensionPixelSize(R.dimen.dialog_margin);
+
+                EditText editText = new EditText(this);
+                editText.setLayoutParams(params);
+                container.addView(editText);
+                AlertDialog.Builder builder2 = new AlertDialog.Builder(this);
+                builder2.setTitle("날씨 위치 변경")
+                        .setMessage("보고싶은 날씨의 위치를 입력하세요. (시 또는 구 또는 동 단위로)")
+                        .setView(container)
+                        .setPositiveButton("저장", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                //입력한 값을 cache에 저장 및 그 값대로 날씨 웹 URL의 parameter로 주고 파싱
+                            }
+                        });
+                AlertDialog alertDialog1 = builder2.create();
+                alertDialog1.show();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
