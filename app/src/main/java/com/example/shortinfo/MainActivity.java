@@ -6,6 +6,9 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import jxl.Sheet;
+import jxl.Workbook;
+import jxl.read.biff.BiffException;
 
 import android.Manifest;
 import android.content.DialogInterface;
@@ -13,7 +16,9 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
+import android.location.Location;
 import android.location.LocationManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -34,6 +39,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -61,9 +67,15 @@ public class MainActivity extends AppCompatActivity {
     GpsTracker gpsTracker;
     String address;
 
+    double la;
+    double lo;
+
+    private Workbook workbook;
+    private Sheet sheet;
+
     private static final int GPS_ENABLE_REQUEST_CODE = 2001;
     private static final int PERMISSIONS_REQUEST_CODE = 100;
-    String[] REQUIRED_PERMISSIONS  = {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION};
+    String[] REQUIRED_PERMISSIONS = {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,10 +92,9 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(getApplicationContext(), ScreenService.class);
         startService(intent);
 
-        if(!checkLocationServicesStatus()){
+        if (!checkLocationServicesStatus()) {
             showDialogForLocationServiceSetting();
-        }
-        else{
+        } else {
             checkRunTimePermission();
         }
         testAddr = findViewById(R.id.test);
@@ -92,10 +103,43 @@ public class MainActivity extends AppCompatActivity {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                double la = gpsTracker.getLatitude();
-                double lo = gpsTracker.getLongitude();
-                Log.d("la , lo",la +" , "+lo);
-                address = getCurrentAddress(la,lo);
+                try {
+                    InputStream inputStream = getBaseContext().getResources().getAssets().open("position_sheet.xls");
+                    workbook = Workbook.getWorkbook(inputStream);
+                    sheet = workbook.getSheet(0);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (BiffException e) {
+                    e.printStackTrace();
+                }
+
+                Log.d("length ", sheet.getRows() + ""); //인덱스 row 2부터 3775까지 for(int i=1; i<3775; ++i)
+
+                // 경도 : latitude (13) , 위도 : longitude (14)
+                int min_index = 0;
+                double min_value_a = 10000000;
+                double min_value_b = 10000000;
+                for (int i = 1; i < 3775; ++i) {
+                    double a = Math.abs(Double.parseDouble(sheet.getCell(14, i).getContents()) - la);
+                    double b = Math.abs(Double.parseDouble(sheet.getCell(13, i).getContents()) - lo);
+                    if (min_value_a > a && min_value_b > b) {
+                        min_value_a = a;
+                        min_value_b = b;
+                        min_index = i;
+                    }
+                }
+                Log.d("min", min_value_a + " , " + min_value_b + " , " + sheet.getCell(4, min_index).getContents());
+
+            }
+        }).start();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                la = gpsTracker.getLatitude();
+                lo = gpsTracker.getLongitude();
+                Log.d("la , lo", la + " , " + lo);
+                address = getCurrentAddress(la, lo);
+
             }
         }).start();
 
