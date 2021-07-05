@@ -1,15 +1,24 @@
 package com.example.shortinfo;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
+import android.Manifest;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -26,6 +35,8 @@ import org.jsoup.select.Elements;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
     private TextView confirmedText;
@@ -46,6 +57,13 @@ public class MainActivity extends AppCompatActivity {
     private TextView worldConfirmedVarText;
     private String[] vaccineFirst;
     private String[] vaccineSecond;
+    TextView testAddr;
+    GpsTracker gpsTracker;
+    String address;
+
+    private static final int GPS_ENABLE_REQUEST_CODE = 2001;
+    private static final int PERMISSIONS_REQUEST_CODE = 100;
+    String[] REQUIRED_PERMISSIONS  = {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,6 +79,26 @@ public class MainActivity extends AppCompatActivity {
 
         Intent intent = new Intent(getApplicationContext(), ScreenService.class);
         startService(intent);
+
+        if(!checkLocationServicesStatus()){
+            showDialogForLocationServiceSetting();
+        }
+        else{
+            checkRunTimePermission();
+        }
+        testAddr = findViewById(R.id.test);
+        gpsTracker = new GpsTracker(this);
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                double la = gpsTracker.getLatitude();
+                double lo = gpsTracker.getLongitude();
+                Log.d("la , lo",la +" , "+lo);
+                address = getCurrentAddress(la,lo);
+            }
+        }).start();
+
 
         final Bundle bundle = new Bundle();
 
@@ -252,6 +290,9 @@ public class MainActivity extends AppCompatActivity {
             worldConfirmedText.setText(" → "+msg.getData().getString("world"));
             worldConfirmedVarText.setText(" ▲ "+msg.getData().getString("world_var"));
             worldStdTime.setText("※ "+msg.getData().getString("world_std_time"));
+
+            testAddr.setText(address);
+
         }
     };
 
@@ -302,5 +343,111 @@ public class MainActivity extends AppCompatActivity {
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if(requestCode == PERMISSIONS_REQUEST_CODE && grantResults.length == REQUIRED_PERMISSIONS.length){
+            boolean check_result = true;
+
+            for(int result : grantResults){
+                if(result != PackageManager.PERMISSION_GRANTED){
+                    check_result = false;
+                    break;
+                }
+            }
+
+            if(check_result){
+
+            }
+            else{
+                if(ActivityCompat.shouldShowRequestPermissionRationale(this, REQUIRED_PERMISSIONS[0]) || ActivityCompat.shouldShowRequestPermissionRationale(this, REQUIRED_PERMISSIONS[1])){
+                    //퍼미션 거부 앱을 다시 실행하여 퍼미션 허용해주세요
+                }
+                else{
+                    // 퍼미션 거부, 설정에서 퍼미션을 허용해야함
+                }
+            }
+        }
+    }
+    public void checkRunTimePermission(){
+        int hasFineLocationPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION);
+        int hasCoarseLocationPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION);
+
+        if(hasFineLocationPermission == PackageManager.PERMISSION_GRANTED && hasCoarseLocationPermission == PackageManager.PERMISSION_GRANTED){
+
+        }
+        else{
+            if(ActivityCompat.shouldShowRequestPermissionRationale(this, REQUIRED_PERMISSIONS[0])){
+                // 이 앱을 실행하려면 위치 접근 권한 필요
+                ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, PERMISSIONS_REQUEST_CODE);
+            }
+            else{
+                ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, PERMISSIONS_REQUEST_CODE);
+            }
+        }
+    }
+    public String getCurrentAddress(double latitude, double longitude){
+        Geocoder geocoder = new Geocoder(this, Locale.getDefault());
+        List<Address> addressList;
+
+        try{
+            addressList = geocoder.getFromLocation(latitude,longitude, 7);
+        }
+        catch (IOException e){
+            // 네트워크 문제
+            return "서비스 사용불가";
+        }
+        catch (IllegalArgumentException e){
+            return "잘못된 GPS 좌표";
+        }
+        if(addressList == null || addressList.size() == 0){
+            return "주소 미발견";
+        }
+
+        Address address = addressList.get(0);
+        return address.getAddressLine(0).toString() +"\n";
+    }
+
+    private void showDialogForLocationServiceSetting(){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("위치 서비스 활성화");
+        builder.setMessage("앱을 사용하기 위해서는 위치 서비스가 필요합니다.\n위치 설정을 수정하시겠습니까?");
+        builder.setCancelable(true);
+        builder.setPositiveButton("설정", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Intent callGPS = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                startActivityForResult(callGPS,GPS_ENABLE_REQUEST_CODE);
+            }
+        });
+        builder.setNegativeButton("취소", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+        builder.create().show();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        switch (requestCode){
+            case GPS_ENABLE_REQUEST_CODE:
+                if(checkLocationServicesStatus()){
+                    // GPS 활성화 되있음
+                    checkRunTimePermission();
+                    return;
+                }
+                break;
+        }
+    }
+    public boolean checkLocationServicesStatus() {
+        LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+
+        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
+                || locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
     }
 }
