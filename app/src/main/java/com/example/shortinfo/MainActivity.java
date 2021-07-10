@@ -41,6 +41,7 @@ import org.jsoup.select.Elements;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
@@ -57,12 +58,14 @@ public class MainActivity extends AppCompatActivity {
     private TextView distancingText;
     private TextView vaccineSecondText;
     private TextView worldStdTime;
+    private TextView currentTime;
     private ArrayList<String> distanceList;
     private static final int defaultRegionNumber = 8; //경기도
     private TextView worldConfirmedText;
     private TextView worldConfirmedVarText;
     private String[] vaccineFirst;
     private String[] vaccineSecond;
+    public static final String[] weeks = {"일요일","월요일","화요일","수요일","목요일","금요일","토요일"};
     TextView testAddr;
     GpsTracker gpsTracker;
     String address;
@@ -145,7 +148,43 @@ public class MainActivity extends AppCompatActivity {
 
 
         final Bundle bundle = new Bundle();
+        currentTime = findViewById(R.id.cur_time);
 
+        new Thread(){
+            @Override
+            public void run(){
+                while(!isInterrupted()){
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Calendar calendar = Calendar.getInstance();
+                            boolean isPM = false;
+                            int year = calendar.get(Calendar.YEAR);
+                            int month = calendar.get(Calendar.MONTH);
+                            int day = calendar.get(Calendar.DAY_OF_MONTH);
+                            int week = calendar.get(Calendar.DAY_OF_WEEK);
+                            int hour = calendar.get(Calendar.HOUR_OF_DAY);
+                            int minute = calendar.get(Calendar.MINUTE);
+                            int second = calendar.get(Calendar.SECOND);
+                            if(hour > 12){
+                                isPM = true;
+                            }
+                            else{
+                                isPM = false;
+                            }
+                            currentTime.setText(year+"년 "+(month+1)+"월 "+day+"일 "+weeks[week-1]+"\n"
+                                    +(isPM ? "오후 " +(hour- 12) : " 오전 " +hour)+"시 "+minute+"분 "+second+"초\n");
+                        }
+                    });
+                    try{
+                        Thread.sleep(1000);
+                    }
+                    catch (InterruptedException e){
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }.start();
         confirmedText = findViewById(R.id.corona_text_confirmed);
         confirmedVarText = findViewById(R.id.corona_text_confirmed_var);
         confirmedDetailText = findViewById(R.id.corona_text_confirmed_detail);
