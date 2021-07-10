@@ -27,10 +27,12 @@ import android.provider.Settings;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import org.jsoup.Jsoup;
@@ -59,12 +61,14 @@ public class MainActivity extends AppCompatActivity {
     private TextView vaccineSecondText;
     private TextView worldStdTime;
     private TextView currentTime;
+    private TextView currentLocation;
     private ArrayList<String> distanceList;
     private static final int defaultRegionNumber = 8; //경기도
     private TextView worldConfirmedText;
     private TextView worldConfirmedVarText;
     private String[] vaccineFirst;
     private String[] vaccineSecond;
+    private ProgressBar progressBar;
     public static final String[] weeks = {"일요일","월요일","화요일","수요일","목요일","금요일","토요일"};
     TextView testAddr;
     GpsTracker gpsTracker;
@@ -102,7 +106,7 @@ public class MainActivity extends AppCompatActivity {
         }
         testAddr = findViewById(R.id.test);
         gpsTracker = new GpsTracker(this);
-
+        progressBar = findViewById(R.id.progressBar);
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -135,6 +139,7 @@ public class MainActivity extends AppCompatActivity {
 
             }
         }).start();
+
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -142,11 +147,14 @@ public class MainActivity extends AppCompatActivity {
                 lo = gpsTracker.getLongitude();
                 Log.d("la , lo", la + " , " + lo);
                 address = getCurrentAddress(la, lo);
-
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        currentLocation.setText(address);
+                    }
+                });
             }
         }).start();
-
-
         final Bundle bundle = new Bundle();
         currentTime = findViewById(R.id.cur_time);
 
@@ -173,7 +181,7 @@ public class MainActivity extends AppCompatActivity {
                                 isPM = false;
                             }
                             currentTime.setText(year+"년 "+(month+1)+"월 "+day+"일 "+weeks[week-1]+"\n"
-                                    +(isPM ? "오후 " +(hour- 12) : " 오전 " +hour)+"시 "+minute+"분 "+second+"초\n");
+                                    +(isPM ? "오후 " +(hour- 12) : " 오전 " +hour)+"시 "+minute+"분 "+second+"초");
                         }
                     });
                     try{
@@ -185,6 +193,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }.start();
+        currentLocation = findViewById(R.id.cur_location);
         confirmedText = findViewById(R.id.corona_text_confirmed);
         confirmedVarText = findViewById(R.id.corona_text_confirmed_var);
         confirmedDetailText = findViewById(R.id.corona_text_confirmed_detail);
@@ -348,6 +357,30 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    public void onGetAddress(View view) {
+        currentLocation.setVisibility(View.GONE);
+        progressBar.setVisibility(View.VISIBLE);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                la = gpsTracker.getLatitude();
+                lo = gpsTracker.getLongitude();
+                Log.d("la , lo", la + " , " + lo);
+                address = getCurrentAddress(la, lo);
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        currentLocation.setText(address);
+                        currentLocation.setVisibility(View.VISIBLE);
+                        progressBar.setVisibility(View.GONE);
+                    }
+                });
+
+            }
+        }).start();
+    }
+
     private String processVaccineFirst(String[] vaccineFirst) {
         String title = vaccineFirst[0] + " " + vaccineFirst[1] + " " + vaccineFirst[2] + " : ";
         String percent = vaccineFirst[3] + " , ";
@@ -374,7 +407,7 @@ public class MainActivity extends AppCompatActivity {
             worldConfirmedVarText.setText(" ▲ "+msg.getData().getString("world_var"));
             worldStdTime.setText("※ "+msg.getData().getString("world_std_time"));
 
-            testAddr.setText(address);
+            currentLocation.setText(address);
 
         }
     };
