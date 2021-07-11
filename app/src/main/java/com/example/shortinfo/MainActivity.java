@@ -358,8 +358,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onGetAddress(View view) {
+        gpsTracker.getLocation();
         currentLocation.setVisibility(View.GONE);
         progressBar.setVisibility(View.VISIBLE);
+
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -367,7 +369,11 @@ public class MainActivity extends AppCompatActivity {
                 lo = gpsTracker.getLongitude();
                 Log.d("la , lo", la + " , " + lo);
                 address = getCurrentAddress(la, lo);
-
+                try {
+                    Thread.sleep(300);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
