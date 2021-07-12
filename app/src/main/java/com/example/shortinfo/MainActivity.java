@@ -6,9 +6,6 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import jxl.Sheet;
-import jxl.Workbook;
-import jxl.read.biff.BiffException;
 
 import android.Manifest;
 import android.content.DialogInterface;
@@ -84,9 +81,6 @@ public class MainActivity extends AppCompatActivity {
     private double la;
     private double lo;
 
-    private Workbook workbook;
-    private Sheet sheet;
-
     private static final int GPS_ENABLE_REQUEST_CODE = 2001;
     private static final int PERMISSIONS_REQUEST_CODE = 100;
     public static final String[] REQUIRED_PERMISSIONS = {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION};
@@ -113,40 +107,7 @@ public class MainActivity extends AppCompatActivity {
         }
         gpsTracker = new GpsTracker(this);
         progressBar = findViewById(R.id.progressBar);
-        /*
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    InputStream inputStream = getBaseContext().getResources().getAssets().open("position_sheet.xls");
-                    workbook = Workbook.getWorkbook(inputStream);
-                    sheet = workbook.getSheet(0);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (BiffException e) {
-                    e.printStackTrace();
-                }
 
-                Log.d("length ", sheet.getRows() + ""); //인덱스 row 2부터 3775까지 for(int i=1; i<3775; ++i)
-
-                // 경도 : latitude (13) , 위도 : longitude (14)
-                int min_index = 0;
-                double min_value_a = 10000000;
-                double min_value_b = 10000000;
-                for (int i = 1; i < 3775; ++i) {
-                    double a = Math.abs(Double.parseDouble(sheet.getCell(14, i).getContents()) - la);
-                    double b = Math.abs(Double.parseDouble(sheet.getCell(13, i).getContents()) - lo);
-                    if (min_value_a > a && min_value_b > b) {
-                        min_value_a = a;
-                        min_value_b = b;
-                        min_index = i;
-                    }
-                }
-                Log.d("min", min_value_a + " , " + min_value_b + " , " + sheet.getCell(4, min_index).getContents());
-
-            }
-        }).start();
-*/
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -390,7 +351,7 @@ public class MainActivity extends AppCompatActivity {
                         String area3 = untilRegion.getJSONObject("area3").optString("name");
                         String detailName = json.optJSONArray("results").getJSONObject(0).getJSONObject("land").optString("name");
                         String detailNumber = json.optJSONArray("results").getJSONObject(0).getJSONObject("land").optString("number1");
-                        String finalAddress = area1+" "+area2+" "+area3+" "+detailName+" "+detailNumber;
+                        String finalAddress = area1 + " " + area2 + " " + area3 + " " + detailName + " " + detailNumber;
                         address = finalAddress;
                         runOnUiThread(new Runnable() {
                             @Override
@@ -404,12 +365,12 @@ public class MainActivity extends AppCompatActivity {
                         // 시 & 구 : results -> region -> area2 -> name
                         // 동 : results -> region -> area3 -> name
                         // 상세 주소 도로명 : results -> land /-> number1 : 상세주소(번호)
-                            // name : 상세 명칭(도로명 이름)
-                            // addition0 -> value : 건물
-                            // addition1 -> value : 우편번호
-                            // addition2 -> value : 도로코드
-                            // addition3 -> value : ???
-                            // addition4 -> value : ???
+                        // name : 상세 명칭(도로명 이름)
+                        // addition0 -> value : 건물
+                        // addition1 -> value : 우편번호
+                        // addition2 -> value : 도로코드
+                        // addition3 -> value : ???
+                        // addition4 -> value : ???
 
                         //Reference : https://api.ncloud-docs.com/docs/ai-naver-mapsreversegeocoding-gc
                     } else {
@@ -439,7 +400,7 @@ public class MainActivity extends AppCompatActivity {
                 Log.d("la , lo", la + " , " + lo);
                 address = getCurrentAddress(la, lo);
                 try {
-                    Thread.sleep(300);
+                    Thread.sleep(100);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
