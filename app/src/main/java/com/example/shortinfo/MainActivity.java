@@ -152,7 +152,7 @@ public class MainActivity extends AppCompatActivity {
                 Document doc = null;
                 try {
                     doc = Jsoup.connect("https://search.naver.com/search.naver?where=nexearch&sm=top_hty&fbm=1&ie=utf8&query=%EC%BD%94%EB%A1%9C%EB%82%98").get();
-
+                    // 코로나
                     Element contents = doc.select("div.status_info li.info_01").select(".info_num").first();
                     bundle.putString("confirmed", contents.text());
 
@@ -216,6 +216,7 @@ public class MainActivity extends AppCompatActivity {
                 Document vaccineUrl = null;
                 try {
                     vaccineUrl = Jsoup.connect("https://search.naver.com/search.naver?sm=tab_sug.top&where=nexearch&query=%EC%BD%94%EB%A1%9C%EB%82%98+%EB%B0%B1%EC%8B%A0+%EC%A0%91%EC%A2%85+%ED%98%84%ED%99%A9&oquery=%EC%BD%94%EB%A1%9C%EB%82%98&tqi=hLI4RlprvxsssdKQRURssssss4C-138619&acq=%EC%BD%94%EB%A1%9C%EB%82%98+%EB%B0%B1&acr=4&qdt=0").get();
+                    // 코로나 백신
                     Elements elements;
                     elements = vaccineUrl.select("div.vaccine_status_item");
                     boolean flag = false;
@@ -361,8 +362,9 @@ public class MainActivity extends AppCompatActivity {
                         String area3 = untilRegion.getJSONObject("area3").optString("name");
                         String detailName = json.optJSONArray("results").getJSONObject(0).getJSONObject("land").optString("name");
                         String detailNumber = json.optJSONArray("results").getJSONObject(0).getJSONObject("land").optString("number1");
-
-                        String finalAddress = area1 + " " + area2 + " " + area3 + " " + detailName + " " + detailNumber;
+                        String building = json.optJSONArray("results").getJSONObject(0).getJSONObject("land").getJSONObject("addition0").optString("value");
+                        String finalAddress = area1 + " " + area2 + " " + detailName + " " + detailNumber + "(" +area3 + ", "+ building +")";
+                        Log.d("building",building);
                         address = finalAddress;
                         runOnUiThread(new Runnable() {
                             @Override
@@ -372,17 +374,17 @@ public class MainActivity extends AppCompatActivity {
                                 progressBar.setVisibility(View.GONE);
                             }
                         });
-                        // 도 : results -> region -> area1 -> name
-                        // 시 & 구 : results -> region -> area2 -> name
-                        // 동 : results -> region -> area3 -> name
-                        // 상세 주소 도로명 : results -> land /-> number1 : 상세주소(번호)
+                        // 도 : results[0] -> region -> area1 -> name
+                        // 시 & 구 : results[0] -> region -> area2 -> name
+                        // 동 : results[0] -> region -> area3 -> name
+                        // 상세 주소 도로명 : results[0] -> land /-> number1 : 상세주소(번호)
                         // name : 상세 명칭(도로명 이름)
                         // addition0 -> value : 건물
                         // addition1 -> value : 우편번호
                         // addition2 -> value : 도로코드
                         // addition3 -> value : ???
                         // addition4 -> value : ???
-
+                        // 도 시 구 도로명 도로번호 (동 건물)
                         //Reference : https://api.ncloud-docs.com/docs/ai-naver-mapsreversegeocoding-gc
                     } else {
                         Log.d("Http Connection Error", "Error");
