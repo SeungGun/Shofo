@@ -13,9 +13,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
-import android.location.Location;
 import android.location.LocationManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -32,7 +30,6 @@ import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.jsoup.Jsoup;
@@ -42,7 +39,6 @@ import org.jsoup.select.Elements;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -53,6 +49,7 @@ import java.util.List;
 import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
+
     private TextView confirmedText;
     private TextView confirmedVarText;
     private TextView confirmedDetailText;
@@ -67,23 +64,22 @@ public class MainActivity extends AppCompatActivity {
     private TextView worldStdTime;
     private TextView currentTime;
     private TextView currentLocation;
-    private ArrayList<String> distanceList;
-    private static final int defaultRegionNumber = 8; //경기도
     private TextView worldConfirmedText;
     private TextView worldConfirmedVarText;
+    private ArrayList<String> distanceList;
     private String[] vaccineFirst;
     private String[] vaccineSecond;
     private ProgressBar progressBar;
-    public static final String[] weeks = {"일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"};
     private GpsTracker gpsTracker;
     private String address;
-
-    private double la;
-    private double lo;
-
+    private Bundle bundle;
+    private double latitude;
+    private double longitude;
+    public static final int defaultRegionNumber = 8; //경기도
     private static final int GPS_ENABLE_REQUEST_CODE = 2001;
     private static final int PERMISSIONS_REQUEST_CODE = 100;
     public static final String[] REQUIRED_PERMISSIONS = {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION};
+    public static final String[] weeks = {"일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,6 +96,8 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(getApplicationContext(), ScreenService.class);
         startService(intent);
 
+        bundle = new Bundle();
+
         if (!checkLocationServicesStatus()) {
             showDialogForLocationServiceSetting();
         } else {
@@ -107,58 +105,6 @@ public class MainActivity extends AppCompatActivity {
         }
         gpsTracker = new GpsTracker(this);
         progressBar = findViewById(R.id.progressBar);
-
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                la = gpsTracker.getLatitude();
-                lo = gpsTracker.getLongitude();
-                Log.d("la , lo", la + " , " + lo);
-                address = getCurrentAddress(la, lo);
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        getAddressUsingNaverAPI();
-                    }
-                });
-            }
-        }).start();
-        final Bundle bundle = new Bundle();
-        currentTime = findViewById(R.id.cur_time);
-
-        new Thread() {
-            @Override
-            public void run() {
-                while (!isInterrupted()) {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Calendar calendar = Calendar.getInstance();
-                            boolean isPM = false;
-                            int year = calendar.get(Calendar.YEAR);
-                            int month = calendar.get(Calendar.MONTH); // 1월 : 0
-                            int day = calendar.get(Calendar.DAY_OF_MONTH);
-                            int week = calendar.get(Calendar.DAY_OF_WEEK);
-                            int hour = calendar.get(Calendar.HOUR_OF_DAY);
-                            int minute = calendar.get(Calendar.MINUTE);
-                            int second = calendar.get(Calendar.SECOND);
-                            if (hour > 12) {
-                                isPM = true;
-                            } else {
-                                isPM = false;
-                            }
-                            currentTime.setText(year + "년 " + (month + 1) + "월 " + day + "일 " + weeks[week - 1] + "\n"
-                                    + (isPM ? "오후 " + (hour - 12) : " 오전 " + hour) + "시 " + minute + "분 " + second + "초");
-                        }
-                    });
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }.start();
         currentLocation = findViewById(R.id.cur_location);
         confirmedText = findViewById(R.id.corona_text_confirmed);
         confirmedVarText = findViewById(R.id.corona_text_confirmed_var);
@@ -174,87 +120,32 @@ public class MainActivity extends AppCompatActivity {
         worldConfirmedText = findViewById(R.id.corona_text_world);
         worldConfirmedVarText = findViewById(R.id.corona_text_world_var);
         worldStdTime = findViewById(R.id.corona_text_world_std_time);
-
-
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                Document coronaUrl = null;
-                try {
-                    coronaUrl = Jsoup.connect("http://ncov.mohw.go.kr/regSocdisBoardView.do?brdId=6&brdGubun=68&ncvContSeq=495").get();
-
-                    Elements scripts = coronaUrl.getElementsByTag("script");
-                    for (Element e : scripts) {
-                        if (e.data().contains("RSS_DATA")) {
-                            int idx_begin = e.data().indexOf("RSS_DATA");
-                            String front = e.data().substring(idx_begin);
-
-                            int idx_end = front.indexOf(";");
-
-                            String cutStr = front.substring(0, idx_end + 1);
-                            cutStr = cutStr.replaceAll(" ", "");
-                            cutStr = cutStr.replace("\n", "");
-
-                            String[] temp = cutStr.split("\\{");
-
-                            // index 0번은 "RSS_DATA = [" 이기 때문에 index 1번부터
-                            for (int i = 1; i < temp.length; ++i) {
-                                int be = temp[i].indexOf("-"); // -부터
-                                int end = temp[i].substring(be).indexOf("}"); // }까지 구분하기 위한 index 구하기
-
-                                String endStr = temp[i].substring(be, be + end);
-                                endStr = endStr.replace("'", ""); // ' 제거
-                                endStr = endStr.replaceAll("<br/>", ""); // <br/> 제거
-
-                                String first = endStr.substring(0, 3);
-                                String second = endStr.substring(3);
-                                String complete = first + " " + second;
-                                distanceList.add(complete);
-                            }
-                            break;
-                        }
-                    }
-
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }).start();
+        currentTime = findViewById(R.id.cur_time);
 
         new Thread(new Runnable() {
             @Override
             public void run() {
-                Document vaccineUrl = null;
-                try {
-                    vaccineUrl = Jsoup.connect("https://search.naver.com/search.naver?sm=tab_sug.top&where=nexearch&query=%EC%BD%94%EB%A1%9C%EB%82%98+%EB%B0%B1%EC%8B%A0+%EC%A0%91%EC%A2%85+%ED%98%84%ED%99%A9&oquery=%EC%BD%94%EB%A1%9C%EB%82%98&tqi=hLI4RlprvxsssdKQRURssssss4C-138619&acq=%EC%BD%94%EB%A1%9C%EB%82%98+%EB%B0%B1&acr=4&qdt=0").get();
-                    Elements elements;
-                    elements = vaccineUrl.select("div.vaccine_status_item");
-                    boolean flag = false;
-                    for (Element e : elements) {
-                        if (!flag) {
-                            vaccineFirst = e.text().split(" ");
-                            flag = true;
-                        } else {
-                            vaccineSecond = e.text().split(" ");
-                            break;
-                        }
+                latitude = gpsTracker.getLatitude(); //위도
+                longitude = gpsTracker.getLongitude(); // 경도
+                Log.d("위도 , 경도", latitude + " , " + longitude);
+                address = getCurrentAddress(latitude, longitude);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        getAddressUsingNaverAPI();
                     }
-                    //[0] ~ [2] : 전국 n차 접종
-                    //[3] : n%
-                    //[4] : 누적n + 명
-                    //[5] : 신규n증가 - 증가 + 명
-                    String firstVacc = processVaccineFirst(vaccineFirst);
-                    String secondVacc = processVaccineFirst(vaccineSecond);
-
-                    bundle.putString("domestic_vaccine_first", firstVacc);
-                    bundle.putString("domestic_vaccine_second", secondVacc);
-
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
+                });
             }
         }).start();
+
+        executeTimeClock(); // 시계 기능
+        getRegionDistanceInfo(); // 지역별 거리두기 정보
+        getVaccineInfo(); // 백신 접종 현황 정보
+        getCoronaInfo(); // 코로나 현황 정보
+    }
+    /* ----------------onCreate()-----------------------------------------------------------*/
+
+    private void getCoronaInfo() {
         new Thread() {
             @Override
             public void run() {
@@ -316,7 +207,125 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }.start();
+    }
 
+    public void getVaccineInfo() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Document vaccineUrl = null;
+                try {
+                    vaccineUrl = Jsoup.connect("https://search.naver.com/search.naver?sm=tab_sug.top&where=nexearch&query=%EC%BD%94%EB%A1%9C%EB%82%98+%EB%B0%B1%EC%8B%A0+%EC%A0%91%EC%A2%85+%ED%98%84%ED%99%A9&oquery=%EC%BD%94%EB%A1%9C%EB%82%98&tqi=hLI4RlprvxsssdKQRURssssss4C-138619&acq=%EC%BD%94%EB%A1%9C%EB%82%98+%EB%B0%B1&acr=4&qdt=0").get();
+                    Elements elements;
+                    elements = vaccineUrl.select("div.vaccine_status_item");
+                    boolean flag = false;
+                    for (Element e : elements) {
+                        if (!flag) {
+                            vaccineFirst = e.text().split(" ");
+                            flag = true;
+                        } else {
+                            vaccineSecond = e.text().split(" ");
+                            break;
+                        }
+                    }
+                    //[0] ~ [2] : 전국 n차 접종
+                    //[3] : n%
+                    //[4] : 누적n + 명
+                    //[5] : 신규n증가 - 증가 + 명
+                    String firstVacc = processVaccineFirst(vaccineFirst);
+                    String secondVacc = processVaccineFirst(vaccineSecond);
+
+                    bundle.putString("domestic_vaccine_first", firstVacc);
+                    bundle.putString("domestic_vaccine_second", secondVacc);
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+            }
+        }).start();
+    }
+
+    public void executeTimeClock() {
+        new Thread() {
+            @Override
+            public void run() {
+                while (!isInterrupted()) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Calendar calendar = Calendar.getInstance();
+                            boolean isPM = false;
+                            int year = calendar.get(Calendar.YEAR);
+                            int month = calendar.get(Calendar.MONTH); // 1월 : 0
+                            int day = calendar.get(Calendar.DAY_OF_MONTH);
+                            int week = calendar.get(Calendar.DAY_OF_WEEK);
+                            int hour = calendar.get(Calendar.HOUR_OF_DAY);
+                            int minute = calendar.get(Calendar.MINUTE);
+                            int second = calendar.get(Calendar.SECOND);
+                            if (hour > 12) {
+                                isPM = true;
+                            } else {
+                                isPM = false;
+                            }
+                            currentTime.setText(year + "년 " + (month + 1) + "월 " + day + "일 " + weeks[week - 1] + "\n"
+                                    + (isPM ? "오후 " + (hour - 12) : " 오전 " + hour) + "시 " + minute + "분 " + second + "초");
+                        }
+                    });
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }.start();
+    }
+
+    public void getRegionDistanceInfo() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Document coronaUrl = null;
+                try {
+                    coronaUrl = Jsoup.connect("http://ncov.mohw.go.kr/regSocdisBoardView.do?brdId=6&brdGubun=68&ncvContSeq=495").get();
+
+                    Elements scripts = coronaUrl.getElementsByTag("script");
+                    for (Element e : scripts) {
+                        if (e.data().contains("RSS_DATA")) {
+                            int idx_begin = e.data().indexOf("RSS_DATA");
+                            String front = e.data().substring(idx_begin);
+
+                            int idx_end = front.indexOf(";");
+
+                            String cutStr = front.substring(0, idx_end + 1);
+                            cutStr = cutStr.replaceAll(" ", "");
+                            cutStr = cutStr.replace("\n", "");
+
+                            String[] temp = cutStr.split("\\{");
+
+                            // index 0번은 "RSS_DATA = [" 이기 때문에 index 1번부터
+                            for (int i = 1; i < temp.length; ++i) {
+                                int be = temp[i].indexOf("-"); // -부터
+                                int end = temp[i].substring(be).indexOf("}"); // }까지 구분하기 위한 index 구하기
+
+                                String endStr = temp[i].substring(be, be + end);
+                                endStr = endStr.replace("'", ""); // ' 제거
+                                endStr = endStr.replaceAll("<br/>", ""); // <br/> 제거
+
+                                String first = endStr.substring(0, 3);
+                                String second = endStr.substring(3);
+                                String complete = first + " " + second;
+                                distanceList.add(complete);
+                            }
+                            break;
+                        }
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
     }
 
     private void getAddressUsingNaverAPI() {
@@ -325,7 +334,7 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 HttpURLConnection urlConnection;
                 try {
-                    URL url = new URL("https://naveropenapi.apigw.ntruss.com/map-reversegeocode/v2/gc?coords=" + lo + "," + la + "&output=json&orders=roadaddr");
+                    URL url = new URL("https://naveropenapi.apigw.ntruss.com/map-reversegeocode/v2/gc?coords=" + longitude + "," + latitude + "&output=json&orders=roadaddr");
                     urlConnection = (HttpURLConnection) url.openConnection();
                     urlConnection.setRequestMethod("GET");
                     urlConnection.setRequestProperty("Accept-Charset", "UTF-8");
@@ -344,13 +353,15 @@ public class MainActivity extends AppCompatActivity {
 
                         Log.d("Address", page);
                         JSONObject json = new JSONObject(page);
-                        //Log.d("result", json.optJSONArray("results").getJSONObject(0).getJSONObject("region").getJSONObject("area2").optString("name"));
+
                         JSONObject untilRegion = json.optJSONArray("results").getJSONObject(0).getJSONObject("region");
+
                         String area1 = untilRegion.getJSONObject("area1").optString("name");
                         String area2 = untilRegion.getJSONObject("area2").optString("name");
                         String area3 = untilRegion.getJSONObject("area3").optString("name");
                         String detailName = json.optJSONArray("results").getJSONObject(0).getJSONObject("land").optString("name");
                         String detailNumber = json.optJSONArray("results").getJSONObject(0).getJSONObject("land").optString("number1");
+
                         String finalAddress = area1 + " " + area2 + " " + area3 + " " + detailName + " " + detailNumber;
                         address = finalAddress;
                         runOnUiThread(new Runnable() {
@@ -374,7 +385,7 @@ public class MainActivity extends AppCompatActivity {
 
                         //Reference : https://api.ncloud-docs.com/docs/ai-naver-mapsreversegeocoding-gc
                     } else {
-                        Log.d("Addr Error", "djwdpwjqpfjqfjwqfjqfqe");
+                        Log.d("Http Connection Error", "Error");
                     }
                 } catch (MalformedURLException e) {
                     e.printStackTrace();
@@ -387,7 +398,7 @@ public class MainActivity extends AppCompatActivity {
         }.start();
     }
 
-    public void onGetAddress(View view) {
+    public void onGetAddress(View view) { // Button Click event
         gpsTracker.getLocation();
         currentLocation.setVisibility(View.GONE);
         progressBar.setVisibility(View.VISIBLE);
@@ -395,10 +406,10 @@ public class MainActivity extends AppCompatActivity {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                la = gpsTracker.getLatitude();
-                lo = gpsTracker.getLongitude();
-                Log.d("la , lo", la + " , " + lo);
-                address = getCurrentAddress(la, lo);
+                latitude = gpsTracker.getLatitude(); // 위도
+                longitude = gpsTracker.getLongitude(); // 경도
+                Log.d("위도 , 경도", latitude + " , " + longitude);
+                address = getCurrentAddress(latitude, longitude);
                 try {
                     Thread.sleep(100);
                 } catch (InterruptedException e) {
@@ -435,7 +446,6 @@ public class MainActivity extends AppCompatActivity {
             worldConfirmedVarText.setText(" ▲ " + msg.getData().getString("world_var"));
             worldStdTime.setText("※ " + msg.getData().getString("world_std_time"));
             currentLocation.setText(address);
-
         }
     };
 
@@ -586,7 +596,6 @@ public class MainActivity extends AppCompatActivity {
 
     public boolean checkLocationServicesStatus() {
         LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-
         return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
                 || locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
     }
