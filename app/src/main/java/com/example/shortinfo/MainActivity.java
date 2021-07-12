@@ -157,7 +157,7 @@ public class MainActivity extends AppCompatActivity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        currentLocation.setText(address);
+                        getAddressUsingNaverAPI();
                     }
                 });
             }
@@ -214,53 +214,6 @@ public class MainActivity extends AppCompatActivity {
         worldConfirmedVarText = findViewById(R.id.corona_text_world_var);
         worldStdTime = findViewById(R.id.corona_text_world_std_time);
 
-        new Thread() {
-            @Override
-            public void run() {
-                HttpURLConnection urlConnection;
-                try {
-                    URL url = new URL("https://naveropenapi.apigw.ntruss.com/map-reversegeocode/v2/gc?coords=" + lo + "," + la + "&output=json&orders=roadaddr");
-                    urlConnection = (HttpURLConnection) url.openConnection();
-                    urlConnection.setRequestMethod("GET");
-                    urlConnection.setRequestProperty("Accept-Charset", "UTF-8");
-                    urlConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded;charset=UTF-8");
-                    urlConnection.setRequestProperty("X-NCP-APIGW-API-KEY-ID", "78obj02dm7");
-                    urlConnection.setRequestProperty("X-NCP-APIGW-API-KEY", "26ZH2x2dbDxREayPjwWOziWD1ZcJOMp0aRmUiW8K");
-
-                    if (urlConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
-                        BufferedReader reader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream(), "UTF-8"));
-
-                        String line;
-                        String page = "";
-                        while ((line = reader.readLine()) != null) {
-                            page += line;
-                        }
-
-                        Log.d("Address", page);
-                        JSONObject json = new JSONObject(page);
-                        Log.d("result", json.optJSONArray("results").getJSONObject(0).getJSONObject("region").getJSONObject("area2").optString("name"));
-                        // 도 : results -> region -> area1 -> name
-                        // 시 & 구 : results -> region -> area2 -> name
-                        // 동 : results -> region -> area3 -> name
-                        // 상세 주소 도로명 : results -> region -> land -> number1 : 상세주소(번호)
-                        // name : 상세 명칭(도로명 이름)
-                        // addition0 -> value : 건물
-                        // addition1 -> value : 우편번호
-                        // addition2 -> value : 도로코드
-                        // addition3 -> value : ???
-                        // addition4 -> value : ???
-                    } else {
-                        Log.d("Addr Error", "djwdpwjqpfjqfjwqfjqfqe");
-                    }
-                } catch (MalformedURLException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-        }.start();
 
         new Thread(new Runnable() {
             @Override
@@ -366,20 +319,17 @@ public class MainActivity extends AppCompatActivity {
                     contents = doc.select("div.status_info li.info_03").select("em.info_variation").first();
                     bundle.putString("release_var", contents.text());
 
-
                     contents = doc.select("div.status_info li.info_04").select(".info_num").first();
                     bundle.putString("dead", contents.text());
-
 
                     contents = doc.select("div.status_info li.info_04").select("em.info_variation").first();
                     bundle.putString("dead_var", contents.text());
 
                     contents = doc.select("div.status_info.abroad_info li.info_01").select(".info_num").first();
                     bundle.putString("world", contents.text());
-//                    Log.d("전 세계 확진자", contents.text());
+
                     contents = doc.select("div.status_info.abroad_info li.info_01").select("em.info_variation").first();
                     bundle.putString("world_var", contents.text());
-//                    Log.d("▲", contents.text());
 
                     contents = doc.select("div.status_today li.info_02").select("em.info_num").first();
                     bundle.putString("today_domestic", contents.text());
@@ -408,6 +358,74 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    private void getAddressUsingNaverAPI() {
+        new Thread() {
+            @Override
+            public void run() {
+                HttpURLConnection urlConnection;
+                try {
+                    URL url = new URL("https://naveropenapi.apigw.ntruss.com/map-reversegeocode/v2/gc?coords=" + lo + "," + la + "&output=json&orders=roadaddr");
+                    urlConnection = (HttpURLConnection) url.openConnection();
+                    urlConnection.setRequestMethod("GET");
+                    urlConnection.setRequestProperty("Accept-Charset", "UTF-8");
+                    urlConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded;charset=UTF-8");
+                    urlConnection.setRequestProperty("X-NCP-APIGW-API-KEY-ID", "78obj02dm7");
+                    urlConnection.setRequestProperty("X-NCP-APIGW-API-KEY", "26ZH2x2dbDxREayPjwWOziWD1ZcJOMp0aRmUiW8K");
+
+                    if (urlConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                        BufferedReader reader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream(), "UTF-8"));
+
+                        String line;
+                        String page = "";
+                        while ((line = reader.readLine()) != null) {
+                            page += line;
+                        }
+
+                        Log.d("Address", page);
+                        JSONObject json = new JSONObject(page);
+                        //Log.d("result", json.optJSONArray("results").getJSONObject(0).getJSONObject("region").getJSONObject("area2").optString("name"));
+                        JSONObject untilRegion = json.optJSONArray("results").getJSONObject(0).getJSONObject("region");
+                        String area1 = untilRegion.getJSONObject("area1").optString("name");
+                        String area2 = untilRegion.getJSONObject("area2").optString("name");
+                        String area3 = untilRegion.getJSONObject("area3").optString("name");
+                        String detailName = json.optJSONArray("results").getJSONObject(0).getJSONObject("land").optString("name");
+                        String detailNumber = json.optJSONArray("results").getJSONObject(0).getJSONObject("land").optString("number1");
+                        String finalAddress = area1+" "+area2+" "+area3+" "+detailName+" "+detailNumber;
+                        address = finalAddress;
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                currentLocation.setText(address);
+                                currentLocation.setVisibility(View.VISIBLE);
+                                progressBar.setVisibility(View.GONE);
+                            }
+                        });
+                        // 도 : results -> region -> area1 -> name
+                        // 시 & 구 : results -> region -> area2 -> name
+                        // 동 : results -> region -> area3 -> name
+                        // 상세 주소 도로명 : results -> land /-> number1 : 상세주소(번호)
+                            // name : 상세 명칭(도로명 이름)
+                            // addition0 -> value : 건물
+                            // addition1 -> value : 우편번호
+                            // addition2 -> value : 도로코드
+                            // addition3 -> value : ???
+                            // addition4 -> value : ???
+
+                        //Reference : https://api.ncloud-docs.com/docs/ai-naver-mapsreversegeocoding-gc
+                    } else {
+                        Log.d("Addr Error", "djwdpwjqpfjqfjwqfjqfqe");
+                    }
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        }.start();
+    }
+
     public void onGetAddress(View view) {
         gpsTracker.getLocation();
         currentLocation.setVisibility(View.GONE);
@@ -425,15 +443,7 @@ public class MainActivity extends AppCompatActivity {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        currentLocation.setText(address);
-                        currentLocation.setVisibility(View.VISIBLE);
-                        progressBar.setVisibility(View.GONE);
-                    }
-                });
-
+                getAddressUsingNaverAPI();
             }
         }).start();
     }
@@ -463,7 +473,6 @@ public class MainActivity extends AppCompatActivity {
             worldConfirmedText.setText(" → " + msg.getData().getString("world"));
             worldConfirmedVarText.setText(" ▲ " + msg.getData().getString("world_var"));
             worldStdTime.setText("※ " + msg.getData().getString("world_std_time"));
-
             currentLocation.setText(address);
 
         }
