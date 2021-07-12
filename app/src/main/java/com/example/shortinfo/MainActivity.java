@@ -270,7 +270,7 @@ public class MainActivity extends AppCompatActivity {
                                 isPM = false;
                             }
                             currentTime.setText(year + "년 " + (month + 1) + "월 " + day + "일 " + weeks[week - 1] + "\n"
-                                    + (isPM ? "오후 " + (hour - 12) : " 오전 " + hour) + "시 " + minute + "분 " + second + "초");
+                                    + (isPM ? "오후 " + (hour - 12) : " 오전 " + (hour == 0 ? 12 : hour)) + "시 " + minute + "분 " + second + "초");
                         }
                     });
                     try {
@@ -363,7 +363,7 @@ public class MainActivity extends AppCompatActivity {
                         String detailName = json.optJSONArray("results").getJSONObject(0).getJSONObject("land").optString("name");
                         String detailNumber = json.optJSONArray("results").getJSONObject(0).getJSONObject("land").optString("number1");
                         String building = json.optJSONArray("results").getJSONObject(0).getJSONObject("land").getJSONObject("addition0").optString("value");
-                        String finalAddress = area1 + " " + area2 + " " + detailName + " " + detailNumber + "(" +area3 + ", "+ building +")";
+                        String finalAddress = area1 + " " + area2 + " " + detailName + " " + detailNumber + " (" +area3 + ", "+ building +")";
                         Log.d("building",building);
                         address = finalAddress;
                         runOnUiThread(new Runnable() {
