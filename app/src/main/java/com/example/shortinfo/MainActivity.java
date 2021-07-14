@@ -72,9 +72,11 @@ public class MainActivity extends AppCompatActivity {
     private ProgressBar progressBar;
     private GpsTracker gpsTracker;
     private String address;
+    private String inputAddress;
     private Bundle bundle;
     private double latitude;
     private double longitude;
+    private boolean useCurrentAddress = false;
     public static final int defaultRegionNumber = 8; //경기도
     private static final int GPS_ENABLE_REQUEST_CODE = 2001;
     private static final int PERMISSIONS_REQUEST_CODE = 100;
@@ -386,6 +388,10 @@ public class MainActivity extends AppCompatActivity {
                         // addition4 -> value : ???
                         // 도 시 구 도로명 도로번호 (동 건물)
                         //Reference : https://api.ncloud-docs.com/docs/ai-naver-mapsreversegeocoding-gc
+
+                        // 1차 : 도, 시
+                        // 2차 : 시, 군, 구
+                        // 3차 : 시, 구, 동, 읍, 면
                     } else {
                         Log.d("Http Connection Error", "Error");
                     }
@@ -479,17 +485,19 @@ public class MainActivity extends AppCompatActivity {
                 params.leftMargin = getResources().getDimensionPixelSize(R.dimen.dialog_margin);
                 params.rightMargin = getResources().getDimensionPixelSize(R.dimen.dialog_margin);
 
-                EditText editText = new EditText(this);
+                final EditText editText = new EditText(this);
                 editText.setLayoutParams(params);
                 container.addView(editText);
                 AlertDialog.Builder builder2 = new AlertDialog.Builder(this);
-                builder2.setTitle("날씨 위치 변경")
-                        .setMessage("보고싶은 날씨의 위치를 입력하세요. (시 또는 구 또는 동 단위로)")
+                builder2.setTitle("날씨 지역명 변경")
+                        .setMessage("보고싶은 날씨의 지역명을 입력하세요. (시 또는 구 또는 동 단위로 지역명만 입력)")
                         .setView(container)
                         .setPositiveButton("저장", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                                 //입력한 값을 cache에 저장 및 그 값대로 날씨 웹 URL의 parameter로 주고 파싱
+                                inputAddress = editText.getText().toString();
+                                getWeatherOfLocation();
                             }
                         });
                 AlertDialog alertDialog1 = builder2.create();
@@ -600,5 +608,32 @@ public class MainActivity extends AppCompatActivity {
         LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
                 || locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+    }
+
+    public void getWeatherOfLocation(){
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Document weatherDoc = null;
+                try {
+                    weatherDoc = Jsoup.connect("https://search.naver.com/search.naver?where=nexearch&sm=top_hty&fbm=1&ie=utf8&query="+inputAddress+"+날씨").get();
+
+                    Log.d("weather test",weatherDoc.select("p.info_temperature").first().text()); // * 온도
+                    Log.d("weather test",weatherDoc.select("ul.info_list p.cast_txt").first().text());
+                    Log.d("weather test",weatherDoc.select("span.merge span.min").first().text());
+                    Log.d("weather test",weatherDoc.select("span.merge span.max").first().text());
+                    Log.d("weather test",weatherDoc.select("div.info_data ul.info_list li span.indicator").text());
+                    Log.d("weather test",weatherDoc.select("div.today_area._mainTabContent ul.info_list").text()); // * 이외 정보
+                    Log.d("weather test",weatherDoc.select("div.today_area._mainTabContent div.sub_info dl.indicator").text()); // * 미세먼지 & 오존
+
+
+
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+
     }
 }
