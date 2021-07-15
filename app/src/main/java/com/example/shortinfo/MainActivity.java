@@ -66,6 +66,10 @@ public class MainActivity extends AppCompatActivity {
     private TextView currentLocation;
     private TextView worldConfirmedText;
     private TextView worldConfirmedVarText;
+    private TextView temperatureText;
+    private TextView weatherText;
+    private TextView airInfoText;
+    private TextView weatherLocation;
     private ArrayList<String> distanceList;
     private String[] vaccineFirst;
     private String[] vaccineSecond;
@@ -123,7 +127,10 @@ public class MainActivity extends AppCompatActivity {
         worldConfirmedVarText = findViewById(R.id.corona_text_world_var);
         worldStdTime = findViewById(R.id.corona_text_world_std_time);
         currentTime = findViewById(R.id.cur_time);
-
+        temperatureText = findViewById(R.id.temperature);
+        weatherText = findViewById(R.id.weather_text);
+        airInfoText = findViewById(R.id.PM_text);
+        weatherLocation = findViewById(R.id.location);
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -185,14 +192,19 @@ public class MainActivity extends AppCompatActivity {
                     contents = doc.select("div.status_info.abroad_info li.info_01").select("em.info_variation").first();
                     bundle.putString("world_var", contents.text());
 
-                    contents = doc.select("div.status_today li.info_02").select("em.info_num").first();
-                    bundle.putString("today_domestic", contents.text());
+                    Elements ee = doc.select("div.api_subject_bx div.normality div.tooltip_area._tooltip_wrapper");
+                    Log.d("dwqfqwfqd",ee.text());
 
-                    contents = doc.select("div.status_today li.info_03").select("em.info_num").first();
-                    bundle.putString("today_abroad", contents.text());
+//                    contents = doc.select("div.confirmed_status.new div.info_wrap dd.desc._y_first_value").first();
+//                    bundle.putString("today_domestic", contents.data());
+                    Elements e2 = doc.select("div.info_wrap").select("dd.desc._y_first_value");
+                    Log.d("dom",e2.text());
+//                    contents = doc.select("div.confirmed_status.new div.info_wrap dd.desc._y_second_value").first();
+//
+//                    bundle.putString("today_abroad", contents.text());
 
-                    Elements elements = doc.select("div.csp_infoCheck_area._togglor_root a.info_text._trigger");
-                    bundle.putString("today_std_time", elements.select("span._update_time").text());
+                    Elements elements = doc.select("div.csp_infoCheck_area._togglor_root a.info_text._trigger span._update_time");
+                    bundle.putString("today_std_time", elements.text());
 
                     elements = doc.select("div.patients_info div.csp_infoCheck_area._togglor_root a.info_text._trigger");
                     int id = elements.text().indexOf("세계현황");
@@ -201,11 +213,14 @@ public class MainActivity extends AppCompatActivity {
                     String sub = s1.substring(4 + id2);
                     bundle.putString("world_std_time", sub);
 
+                } catch (Exception e) {
+                    Log.e("error", e.getMessage());
+                    e.printStackTrace();
+                }
+                finally {
                     Message msg = handler.obtainMessage();
                     msg.setData(bundle);
                     handler.sendMessage(msg);
-                } catch (Exception e) {
-                    Log.e("error", e.getMessage());
                 }
             }
         }.start();
@@ -439,22 +454,28 @@ public class MainActivity extends AppCompatActivity {
     Handler handler = new Handler(Looper.getMainLooper()) {
         @Override
         public void handleMessage(Message msg) {
-            confirmedText.setText("국내 확진자 → " + msg.getData().getString("confirmed"));
-            confirmedVarText.setText(" ▲ " + msg.getData().getString("confirmed_var"));
-            confirmedDetailText.setText("(국내: " + msg.getData().getString("today_domestic") + " , 해외: " + msg.getData().getString("today_abroad") + ")");
-            releaseText.setText("국내 격리해제 → " + msg.getData().getString("release"));
-            releaseVarText.setText(" ▲ " + msg.getData().getString("release_var"));
-            deadText.setText("국내 사망자 → " + msg.getData().getString("dead"));
-            deadVarText.setText(" ▲ " + msg.getData().getString("dead_var"));
-            stdDateText.setText("※ 국내 집계 기준 시간 " + msg.getData().getString("today_std_time"));
-            vaccineFirstText.setText(msg.getData().getString("domestic_vaccine_first"));
-            vaccineSecondText.setText(msg.getData().getString("domestic_vaccine_second"));
-            distancingText.setText("※ 거리두기 " + distanceList.get(defaultRegionNumber));
-            worldConfirmedText.setText(" → " + msg.getData().getString("world"));
-            worldConfirmedVarText.setText(" ▲ " + msg.getData().getString("world_var"));
-            worldStdTime.setText("※ " + msg.getData().getString("world_std_time"));
-            currentLocation.setText(address);
+            try {
+                confirmedText.setText("국내 확진자 → " + msg.getData().getString("confirmed"));
+                confirmedVarText.setText(" ▲ " + msg.getData().getString("confirmed_var"));
+                confirmedDetailText.setText("(국내: " + msg.getData().getString("today_domestic") + " , 해외: " + msg.getData().getString("today_abroad") + ")");
+                releaseText.setText("국내 격리해제 → " + msg.getData().getString("release"));
+                releaseVarText.setText(" ▲ " + msg.getData().getString("release_var"));
+                deadText.setText("국내 사망자 → " + msg.getData().getString("dead"));
+                deadVarText.setText(" ▲ " + msg.getData().getString("dead_var"));
+                stdDateText.setText("※ 국내 집계 기준 시간 " + msg.getData().getString("today_std_time"));
+                vaccineFirstText.setText(msg.getData().getString("domestic_vaccine_first"));
+                vaccineSecondText.setText(msg.getData().getString("domestic_vaccine_second"));
+                distancingText.setText("※ 거리두기 " + distanceList.get(defaultRegionNumber));
+                worldConfirmedText.setText(" → " + msg.getData().getString("world"));
+                worldConfirmedVarText.setText(" ▲ " + msg.getData().getString("world_var"));
+                worldStdTime.setText("※ " + msg.getData().getString("world_std_time"));
+                currentLocation.setText(address);
+            }
+            catch (Exception e){
+                e.printStackTrace();
+            }
         }
+
     };
 
     @Override
@@ -498,6 +519,7 @@ public class MainActivity extends AppCompatActivity {
                                 //입력한 값을 cache에 저장 및 그 값대로 날씨 웹 URL의 parameter로 주고 파싱
                                 inputAddress = editText.getText().toString();
                                 getWeatherOfLocation();
+                                weatherLocation.setText(inputAddress+" 날씨");
                             }
                         });
                 AlertDialog alertDialog1 = builder2.create();
@@ -626,8 +648,17 @@ public class MainActivity extends AppCompatActivity {
                     Log.d("weather test",weatherDoc.select("div.today_area._mainTabContent ul.info_list").text()); // * 이외 정보
                     Log.d("weather test",weatherDoc.select("div.today_area._mainTabContent div.sub_info dl.indicator").text()); // * 미세먼지 & 오존
 
-
-
+                    final String temperature = weatherDoc.select("p.info_temperature").first().text();
+                    final String list = weatherDoc.select("div.today_area._mainTabContent ul.info_list").text();
+                    final String air_info = weatherDoc.select("div.today_area._mainTabContent div.sub_info dl.indicator").text();
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            temperatureText.setText(temperature);
+                            weatherText.setText(list);
+                            airInfoText.setText(air_info);
+                        }
+                    });
 
                 } catch (IOException e) {
                     e.printStackTrace();
