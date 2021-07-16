@@ -131,6 +131,16 @@ public class MainActivity extends AppCompatActivity {
         weatherText = findViewById(R.id.weather_text);
         airInfoText = findViewById(R.id.PM_text);
         weatherLocation = findViewById(R.id.location);
+
+        getInitialLocation(); // 초기 위도, 경도 정보 가져오기
+        executeTimeClock(); // 시계 기능
+        getRegionDistanceInfo(); // 지역별 거리두기 정보
+        getVaccineInfo(); // 백신 접종 현황 정보
+        getCoronaInfo(); // 코로나 현황 정보
+        getTodayOccurrence(); // 국내 발생 현황(국내발생 및 해외유입 정보)
+    }
+
+    public void getInitialLocation() {
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -146,11 +156,28 @@ public class MainActivity extends AppCompatActivity {
                 });
             }
         }).start();
+    }
 
-        executeTimeClock(); // 시계 기능
-        getRegionDistanceInfo(); // 지역별 거리두기 정보
-        getVaccineInfo(); // 백신 접종 현황 정보
-        getCoronaInfo(); // 코로나 현황 정보
+    public void getTodayOccurrence() {
+        new Thread(){
+            @Override
+            public void run(){
+                Document document = null;
+                try {
+                    Log.d("Start","signal");
+                    document = Jsoup.connect("http://ncov.mohw.go.kr/bdBoardList_Real.do").get();
+                    Elements elements = document.select("div.caseTable dd.ca_value p.inner_value");
+                    ArrayList<String> arrayList = new ArrayList<>();
+                    for(Element e : elements){
+                        arrayList.add(e.text());
+                    }
+                    bundle.putString("today_domestic",arrayList.get(1));
+                    bundle.putString("today_abroad",arrayList.get(2));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }.start();
     }
     /* ----------------onCreate()-----------------------------------------------------------*/
 
@@ -192,17 +219,6 @@ public class MainActivity extends AppCompatActivity {
                     contents = doc.select("div.status_info.abroad_info li.info_01").select("em.info_variation").first();
                     bundle.putString("world_var", contents.text());
 
-                    Elements ee = doc.select("div.api_subject_bx div.normality div.tooltip_area._tooltip_wrapper");
-                    Log.d("dwqfqwfqd",ee.text());
-
-//                    contents = doc.select("div.confirmed_status.new div.info_wrap dd.desc._y_first_value").first();
-//                    bundle.putString("today_domestic", contents.data());
-                    Elements e2 = doc.select("div.info_wrap").select("dd.desc._y_first_value");
-                    Log.d("dom",e2.text());
-//                    contents = doc.select("div.confirmed_status.new div.info_wrap dd.desc._y_second_value").first();
-//
-//                    bundle.putString("today_abroad", contents.text());
-
                     Elements elements = doc.select("div.csp_infoCheck_area._togglor_root a.info_text._trigger span._update_time");
                     bundle.putString("today_std_time", elements.text());
 
@@ -214,7 +230,6 @@ public class MainActivity extends AppCompatActivity {
                     bundle.putString("world_std_time", sub);
 
                 } catch (Exception e) {
-                    Log.e("error", e.getMessage());
                     e.printStackTrace();
                 }
                 finally {
@@ -225,7 +240,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }.start();
     }
-
     public void getVaccineInfo() {
         new Thread(new Runnable() {
             @Override
@@ -457,7 +471,7 @@ public class MainActivity extends AppCompatActivity {
             try {
                 confirmedText.setText("국내 확진자 → " + msg.getData().getString("confirmed"));
                 confirmedVarText.setText(" ▲ " + msg.getData().getString("confirmed_var"));
-                confirmedDetailText.setText("(국내: " + msg.getData().getString("today_domestic") + " , 해외: " + msg.getData().getString("today_abroad") + ")");
+                confirmedDetailText.setText("(국내 발생: " + msg.getData().getString("today_domestic") + " , 해외 유입: " + msg.getData().getString("today_abroad") + ")");
                 releaseText.setText("국내 격리해제 → " + msg.getData().getString("release"));
                 releaseVarText.setText(" ▲ " + msg.getData().getString("release_var"));
                 deadText.setText("국내 사망자 → " + msg.getData().getString("dead"));
@@ -638,6 +652,7 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 Document weatherDoc = null;
                 try {
+                    inputAddress = inputAddress.replace(' ','+');
                     weatherDoc = Jsoup.connect("https://search.naver.com/search.naver?where=nexearch&sm=top_hty&fbm=1&ie=utf8&query="+inputAddress+"+날씨").get();
 
                     Log.d("weather test",weatherDoc.select("p.info_temperature").first().text()); // * 온도
