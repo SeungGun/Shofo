@@ -133,8 +133,8 @@ public class MainActivity extends AppCompatActivity {
         weatherLocation = findViewById(R.id.location);
 
         getInitialLocation(); // 초기 위도, 경도 정보 가져오기
-        executeTimeClock(); // 시계 기능
         getRegionDistanceInfo(); // 지역별 거리두기 정보
+        executeTimeClock(); // 시계 기능
         getVaccineInfo(); // 백신 접종 현황 정보
         getCoronaInfo(); // 코로나 현황 정보
         getTodayOccurrence(); // 국내 발생 현황(국내발생 및 해외유입 정보)
@@ -190,44 +190,51 @@ public class MainActivity extends AppCompatActivity {
                     doc = Jsoup.connect("https://search.naver.com/search.naver?where=nexearch&sm=top_hty&fbm=1&ie=utf8&query=%EC%BD%94%EB%A1%9C%EB%82%98").get();
                     // 코로나
                     Element contents = doc.select("div.status_info li.info_01").select(".info_num").first();
-                    bundle.putString("confirmed", contents.text());
+                    bundle.putString("confirmed", contents.text() == null ? "데이터 에러" : contents.text());
 
                     contents = doc.select("div.status_info li.info_01").select("em.info_variation").first();
-                    bundle.putString("confirmed_var", contents.text());
+                    bundle.putString("confirmed_var", contents.text() == null ? "데이터 에러" : contents.text());
 
                     contents = doc.select("div.status_info li.info_02").select(".info_num").first();
-                    bundle.putString("inspection", contents.text());
+                    bundle.putString("inspection", contents.text() == null ? "데이터 에러" : contents.text());
 
                     contents = doc.select("div.status_info li.info_02").select("em.info_variation").first();
-                    bundle.putString("inspection_var", contents.text());
+                    bundle.putString("inspection_var", contents.text() == null ? "데이터 에러" : contents.text());
 
                     contents = doc.select("div.status_info li.info_03").select(".info_num").first();
-                    bundle.putString("release", contents.text());
+                    bundle.putString("release", contents.text() == null ? "데이터 에러" : contents.text());
 
                     contents = doc.select("div.status_info li.info_03").select("em.info_variation").first();
-                    bundle.putString("release_var", contents.text());
+                    bundle.putString("release_var", contents.text() == null ? "데이터 에러" : contents.text());
 
                     contents = doc.select("div.status_info li.info_04").select(".info_num").first();
-                    bundle.putString("dead", contents.text());
+                    bundle.putString("dead", contents.text() == null ? "데이터 에러" : contents.text());
 
                     contents = doc.select("div.status_info li.info_04").select("em.info_variation").first();
-                    bundle.putString("dead_var", contents.text());
+                    bundle.putString("dead_var", contents.text() == null ? "데이터 에러" : contents.text());
 
                     contents = doc.select("div.status_info.abroad_info li.info_01").select(".info_num").first();
-                    bundle.putString("world", contents.text());
+                    bundle.putString("world", contents.text() == null ? "데이터 에러" : contents.text());
 
                     contents = doc.select("div.status_info.abroad_info li.info_01").select("em.info_variation").first();
-                    bundle.putString("world_var", contents.text());
+                    bundle.putString("world_var", contents.text() == null ? "데이터 에러" : contents.text());
 
                     Elements elements = doc.select("div.csp_infoCheck_area._togglor_root a.info_text._trigger span._update_time");
-                    bundle.putString("today_std_time", elements.text());
+                    bundle.putString("today_std_time", elements.text() == null ? "데이터 에러" : elements.text());
 
                     elements = doc.select("div.patients_info div.csp_infoCheck_area._togglor_root a.info_text._trigger");
-                    int id = elements.text().indexOf("세계현황");
-                    String s1 = elements.text().substring(id);
-                    int id2 = s1.substring(4).indexOf("세계현황");
-                    String sub = s1.substring(4 + id2);
-                    bundle.putString("world_std_time", sub);
+
+                    if(elements.text() == null){
+                        bundle.putString("world_std_time","데이터 에러");
+                    }
+                    else{
+                        int id = elements.text().indexOf("세계현황");
+                        String s1 = elements.text().substring(id);
+                        int id2 = s1.substring(4).indexOf("세계현황");
+                        String sub = s1.substring(4 + id2);
+                        bundle.putString("world_std_time", sub);
+                    }
+
 
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -251,6 +258,11 @@ public class MainActivity extends AppCompatActivity {
                     Elements elements;
                     elements = vaccineUrl.select("div.vaccine_status_item");
                     boolean flag = false;
+                    if(elements.text() == null){
+                        bundle.putString("domestic_vaccine_first", "데이터 에러");
+                        bundle.putString("domestic_vaccine_second", "데이터 에러");
+                        return;
+                    }
                     for (Element e : elements) {
                         if (!flag) {
                             vaccineFirst = e.text().split(" ");
@@ -323,6 +335,10 @@ public class MainActivity extends AppCompatActivity {
                     coronaUrl = Jsoup.connect("http://ncov.mohw.go.kr/regSocdisBoardView.do?brdId=6&brdGubun=68&ncvContSeq=495").get();
 
                     Elements scripts = coronaUrl.getElementsByTag("script");
+                    if(scripts.text() == null){
+                        distanceList.add("데이터 에러");
+                        return;
+                    }
                     for (Element e : scripts) {
                         if (e.data().contains("RSS_DATA")) {
                             int idx_begin = e.data().indexOf("RSS_DATA");
