@@ -65,6 +65,8 @@ public class MainActivity extends AppCompatActivity {
     private TextView vaccineSecondText;
     private TextView worldStdTime;
     private TextView currentTime;
+    private TextView currentDate;
+    private TextView currentWeeks;
     private TextView currentLocation;
     private TextView worldConfirmedText;
     private TextView worldConfirmedVarText;
@@ -132,6 +134,8 @@ public class MainActivity extends AppCompatActivity {
         worldConfirmedVarText = findViewById(R.id.corona_text_world_var);
         worldStdTime = findViewById(R.id.corona_text_world_std_time);
         currentTime = findViewById(R.id.cur_time);
+        currentDate = findViewById(R.id.cur_date);
+        currentWeeks = findViewById(R.id.weeks);
         temperatureText = findViewById(R.id.temperature);
         weatherText = findViewById(R.id.weather_text);
         PM10Text = findViewById(R.id.PM10_text);
@@ -339,8 +343,20 @@ public class MainActivity extends AppCompatActivity {
                             } else {
                                 isPM = false;
                             }
-                            currentTime.setText(year + "년 " + (month + 1) + "월 " + day + "일 " + WEEKS[week - 1] + "\n"
-                                    + (isPM ? "오후 " + (hour - 12) : " 오전 " + (hour == 0 ? 12 : hour)) + "시 " + minute + "분 " + second + "초");
+                            currentDate.setText(year + "년 " + (month + 1) + "월 " + day + "일");
+                            String colors;
+                            if(WEEKS[week- 1].equals("일요일")){
+                                colors = "#FF0000";
+                            }
+                            else if(WEEKS[week - 1].equals("토요일")){
+                                colors = "#3CA0E1";
+                            }
+                            else{
+                                colors = "#000000";
+                            }
+                            currentWeeks.setTextColor(Color.parseColor(colors));
+                            currentWeeks.setText(WEEKS[week-1]);
+                            currentTime.setText((isPM ? "오후 " + (hour - 12) : " 오전 " + (hour == 0 ? 12 : hour)) + ":" + minute + ":" + second);
                         }
                     });
                     try {
@@ -745,6 +761,9 @@ public class MainActivity extends AppCompatActivity {
                     });
 
                 } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                catch (NullPointerException e){
                     e.printStackTrace();
                 }
             }
