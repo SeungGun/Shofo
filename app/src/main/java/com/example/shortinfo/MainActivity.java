@@ -25,6 +25,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
@@ -78,6 +79,7 @@ public class MainActivity extends AppCompatActivity {
     private String address;
     private String inputAddress;
     private Bundle bundle;
+    private Button currentLocationWeather;
     private double latitude;
     private double longitude;
     private boolean useCurrentAddress = false;
@@ -85,7 +87,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int GPS_ENABLE_REQUEST_CODE = 2001;
     private static final int PERMISSIONS_REQUEST_CODE = 100;
     public static final String[] REQUIRED_PERMISSIONS = {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION};
-    public static final String[] weeks = {"일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"};
+    public static final String[] WEEKS = {"일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -131,8 +133,21 @@ public class MainActivity extends AppCompatActivity {
         weatherText = findViewById(R.id.weather_text);
         airInfoText = findViewById(R.id.PM_text);
         weatherLocation = findViewById(R.id.location);
+        currentLocationWeather = findViewById(R.id.curloc_wt_button);
+        currentLocationWeather.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(address != null){
+                    String[] divide = address.split(" ");
+                    inputAddress = divide[1] +" "+divide[2];
+                    weatherLocation.setText(inputAddress+" 날씨");
+                    getWeatherOfLocation();
+                }
+            }
+        });
+        //SharedPreference 이용해서 현재 위치로 할 것인지 boolean 값 받아와서 true라면 현재 위치 값 설정하는 initialization 함수 만들기
 
-        getInitialLocation(); // 초기 위도, 경도 정보 가져오기
+        getInitialLocation(); // 초기 위도, 경도값을 구해 주소정보 가져오기
         getRegionDistanceInfo(); // 지역별 거리두기 정보
         executeTimeClock(); // 시계 기능
         getVaccineInfo(); // 백신 접종 현황 정보
@@ -147,7 +162,7 @@ public class MainActivity extends AppCompatActivity {
                 latitude = gpsTracker.getLatitude(); //위도
                 longitude = gpsTracker.getLongitude(); // 경도
                 Log.d("위도 , 경도", latitude + " , " + longitude);
-                address = getCurrentAddress(latitude, longitude);
+//                address = getCurrentAddress(latitude, longitude);
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -312,7 +327,7 @@ public class MainActivity extends AppCompatActivity {
                             } else {
                                 isPM = false;
                             }
-                            currentTime.setText(year + "년 " + (month + 1) + "월 " + day + "일 " + weeks[week - 1] + "\n"
+                            currentTime.setText(year + "년 " + (month + 1) + "월 " + day + "일 " + WEEKS[week - 1] + "\n"
                                     + (isPM ? "오후 " + (hour - 12) : " 오전 " + (hour == 0 ? 12 : hour)) + "시 " + minute + "분 " + second + "초");
                         }
                     });

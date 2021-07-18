@@ -279,6 +279,12 @@
             android:orientation="vertical"
             android:background="@drawable/sector_design"
             android:layout_margin="8dp">
+            <Button
+                android:layout_margin="5dp"
+                android:id="@+id/curloc_wt_button"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:background="@drawable/ic_baseline_my_location_24"/>
             <TextView
                 android:id="@+id/location"
                 android:layout_width="wrap_content"
