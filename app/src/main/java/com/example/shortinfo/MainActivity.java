@@ -11,6 +11,7 @@ import android.Manifest;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.LocationManager;
@@ -25,9 +26,9 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -69,7 +70,9 @@ public class MainActivity extends AppCompatActivity {
     private TextView worldConfirmedVarText;
     private TextView temperatureText;
     private TextView weatherText;
-    private TextView airInfoText;
+    private TextView PM10Text;
+    private TextView PM2_5Text;
+    private TextView ozoneText;
     private TextView weatherLocation;
     private ArrayList<String> distanceList;
     private String[] vaccineFirst;
@@ -79,7 +82,7 @@ public class MainActivity extends AppCompatActivity {
     private String address;
     private String inputAddress;
     private Bundle bundle;
-    private Button currentLocationWeather;
+    private ImageButton currentLocationWeather;
     private double latitude;
     private double longitude;
     private boolean useCurrentAddress = false;
@@ -131,18 +134,30 @@ public class MainActivity extends AppCompatActivity {
         currentTime = findViewById(R.id.cur_time);
         temperatureText = findViewById(R.id.temperature);
         weatherText = findViewById(R.id.weather_text);
-        airInfoText = findViewById(R.id.PM_text);
+        PM10Text = findViewById(R.id.PM10_text);
+        PM2_5Text = findViewById(R.id.PM2_5_text);
+        ozoneText = findViewById(R.id.ozone_text);
         weatherLocation = findViewById(R.id.location);
         currentLocationWeather = findViewById(R.id.curloc_wt_button);
         currentLocationWeather.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(address != null){
-                    String[] divide = address.split(" ");
-                    inputAddress = divide[1] +" "+divide[2];
-                    weatherLocation.setText(inputAddress+" 날씨");
-                    getWeatherOfLocation();
+                if(useCurrentAddress){
+                    useCurrentAddress = false;
+                    currentLocationWeather.setBackgroundColor(Color.parseColor("#ffffff"));
                 }
+                else{
+                    useCurrentAddress = true;
+                    currentLocationWeather.setBackgroundColor(Color.parseColor("#46BEFF"));
+
+                    if(address != null){
+                        String[] divide = address.split(" ");
+                        inputAddress = divide[1] +" "+divide[2];
+                        weatherLocation.setText(inputAddress+" 날씨");
+                        getWeatherOfLocation();
+                    }
+                }
+
             }
         });
         //SharedPreference 이용해서 현재 위치로 할 것인지 boolean 값 받아와서 true라면 현재 위치 값 설정하는 initialization 함수 만들기
@@ -151,8 +166,8 @@ public class MainActivity extends AppCompatActivity {
         getRegionDistanceInfo(); // 지역별 거리두기 정보
         executeTimeClock(); // 시계 기능
         getVaccineInfo(); // 백신 접종 현황 정보
-        getCoronaInfo(); // 코로나 현황 정보
         getTodayOccurrence(); // 국내 발생 현황(국내발생 및 해외유입 정보)
+        getCoronaInfo(); // 코로나 현황 정보
     }
 
     public void getInitialLocation() {
@@ -179,7 +194,6 @@ public class MainActivity extends AppCompatActivity {
             public void run(){
                 Document document = null;
                 try {
-                    Log.d("Start","signal");
                     document = Jsoup.connect("http://ncov.mohw.go.kr/bdBoardList_Real.do").get();
                     Elements elements = document.select("div.caseTable dd.ca_value p.inner_value");
                     ArrayList<String> arrayList = new ArrayList<>();
@@ -249,8 +263,6 @@ public class MainActivity extends AppCompatActivity {
                         String sub = s1.substring(4 + id2);
                         bundle.putString("world_std_time", sub);
                     }
-
-
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -694,15 +706,41 @@ public class MainActivity extends AppCompatActivity {
                     Log.d("weather test",weatherDoc.select("div.today_area._mainTabContent ul.info_list").text()); // * 이외 정보
                     Log.d("weather test",weatherDoc.select("div.today_area._mainTabContent div.sub_info dl.indicator").text()); // * 미세먼지 & 오존
 
+                    for(Element e : weatherDoc.select("div.today_area._mainTabContent div.sub_info dl.indicator")){
+                        Log.d("first",e.text());
+                    }
+
+                    for(Element e : weatherDoc.select("div.today_area._mainTabContent ul.info_list")){
+                        Log.d("second",e.text());
+                    }
                     final String temperature = weatherDoc.select("p.info_temperature").first().text();
                     final String list = weatherDoc.select("div.today_area._mainTabContent ul.info_list").text();
                     final String air_info = weatherDoc.select("div.today_area._mainTabContent div.sub_info dl.indicator").text();
+
+                    String[] airs = air_info.split(" ");
+                    // 미세먼지, 수치수준, 초미세먼지, 수치수준, 오존지수, 수치수준
+                    // index 1, 3, 5의 마지막 두글자 캐기
+                    final String pm10Std = airs[1].substring(airs[1].length() - 2);
+                    final String pm25Std = airs[3].substring(airs[3].length() - 2);
+                    final String ozoneStd = airs[5].substring(airs[5].length() - 2);
+                    PM10Text.setTextColor(Color.parseColor(getColorAccordingStd(pm10Std)));
+                    PM2_5Text.setTextColor(Color.parseColor(getColorAccordingStd(pm25Std)));
+                    ozoneText.setTextColor(Color.parseColor(getColorAccordingStd(ozoneStd)));
+                    final String pm10Figure = airs[1].substring(0, airs[1].length() - 2);
+                    final String pm25Figure = airs[3].substring(0, airs[3].length() - 2);
+                    final String ozoneFigure = airs[5].substring(0, airs[5].length() - 2);
+                    Log.d("Dwdw",pm10Figure+pm25Figure+ozoneFigure);
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            temperatureText.setText(temperature);
+
+
+                            PM10Text.setText("미세먼지 : "+pm10Figure+" - "+pm10Std);
+                            PM2_5Text.setText("초미세먼지 : "+pm25Figure+" - "+pm25Std);
+                            ozoneText.setText("오존 수치 : "+ozoneFigure+" - "+ozoneStd);
+                            temperatureText.setText("현재 기온 : "+temperature.replace("도씨",""));
                             weatherText.setText(list);
-                            airInfoText.setText(air_info);
+                            //PM10Text.setText(air_info);
                         }
                     });
 
@@ -712,5 +750,18 @@ public class MainActivity extends AppCompatActivity {
             }
         }).start();
 
+    }
+    public String getColorAccordingStd(String std){
+        switch (std) {
+            case "좋음":
+                return "#0000FF";
+            case "보통":
+                return "#63CC63";
+            case "나쁨":
+                return "#FFFF00";
+            case "매우":
+                return "#FF0000";
+        }
+        return "#000000";
     }
 }
