@@ -83,6 +83,12 @@ public class MainActivity extends AppCompatActivity {
     private GpsTracker gpsTracker;
     private String address;
     private String inputAddress;
+    private String area1;
+    private String area2;
+    private String area3;
+    private String detailName;
+    private String detailNumber;
+    private String building;
     private Bundle bundle;
     private ImageButton currentLocationWeather;
     private double latitude;
@@ -106,7 +112,7 @@ public class MainActivity extends AppCompatActivity {
         getSupportActionBar().setTitle("Short Information");
         distanceList = new ArrayList<>();
 
-        Intent intent = new Intent(getApplicationContext(), ScreenService.class);
+        final Intent intent = new Intent(getApplicationContext(), ScreenService.class);
         startService(intent);
 
         bundle = new Bundle();
@@ -156,7 +162,12 @@ public class MainActivity extends AppCompatActivity {
 
                     if(address != null){
                         String[] divide = address.split(" ");
-                        inputAddress = divide[1] +" "+divide[2];
+                        if(area3 != null){
+                            inputAddress = divide[1] +" "+divide[2]+ " " +area3;
+                        }
+                        else{
+                            inputAddress = divide[1] +" "+divide[2];
+                        }
                         weatherLocation.setText(inputAddress+" 날씨");
                         getWeatherOfLocation();
                     }
@@ -447,12 +458,12 @@ public class MainActivity extends AppCompatActivity {
 
                         JSONObject untilRegion = json.optJSONArray("results").getJSONObject(0).getJSONObject("region");
 
-                        String area1 = untilRegion.getJSONObject("area1").optString("name");
-                        String area2 = untilRegion.getJSONObject("area2").optString("name");
-                        String area3 = untilRegion.getJSONObject("area3").optString("name");
-                        String detailName = json.optJSONArray("results").getJSONObject(0).getJSONObject("land").optString("name");
-                        String detailNumber = json.optJSONArray("results").getJSONObject(0).getJSONObject("land").optString("number1");
-                        String building = json.optJSONArray("results").getJSONObject(0).getJSONObject("land").getJSONObject("addition0").optString("value");
+                        area1 = untilRegion.getJSONObject("area1").optString("name");
+                        area2 = untilRegion.getJSONObject("area2").optString("name");
+                        area3 = untilRegion.getJSONObject("area3").optString("name");
+                        detailName = json.optJSONArray("results").getJSONObject(0).getJSONObject("land").optString("name");
+                        detailNumber = json.optJSONArray("results").getJSONObject(0).getJSONObject("land").optString("number1");
+                        building = json.optJSONArray("results").getJSONObject(0).getJSONObject("land").getJSONObject("addition0").optString("value");
                         String finalAddress = area1 + " " + area2 + " " + detailName + " " + detailNumber + " (" +area3 + ", "+ building +")";
                         Log.d("building",building);
                         address = finalAddress;
