@@ -363,7 +363,7 @@
                     android:id="@+id/weather_image"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:src="@drawable/ic_baseline_cloud_24"/>
+                    />
                 <TextView
                     android:id="@+id/temperature"
                     android:layout_width="wrap_content"
@@ -414,7 +414,9 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textSize="8.5pt"
-                    android:padding="3dp"/>
+                    android:padding="3dp"
+                    android:layout_marginLeft="3dp"
+                    />
                 <TextView
                     android:id="@+id/PM2_5_text"
                     android:layout_width="wrap_content"
@@ -428,6 +430,7 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal">
             <TextView
+                android:layout_marginLeft="3dp"
                 android:id="@+id/ozone_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
