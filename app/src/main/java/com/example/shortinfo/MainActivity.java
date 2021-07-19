@@ -349,7 +349,7 @@ public class MainActivity extends AppCompatActivity {
                             int hour = calendar.get(Calendar.HOUR_OF_DAY);
                             int minute = calendar.get(Calendar.MINUTE);
                             int second = calendar.get(Calendar.SECOND);
-                            if (hour > 12) {
+                            if (hour >= 12) {
                                 isPM = true;
                             } else {
                                 isPM = false;
@@ -367,7 +367,7 @@ public class MainActivity extends AppCompatActivity {
                             }
                             currentWeeks.setTextColor(Color.parseColor(colors));
                             currentWeeks.setText(WEEKS[week-1]);
-                            currentTime.setText((isPM ? "오후 " + (hour - 12) : " 오전 " + (hour == 0 ? 12 : hour)) + ":" + minute + ":" + second);
+                            currentTime.setText((isPM ? "오후 " + (hour == 12 ? hour : (hour - 12)) : " 오전 " + (hour == 0 ? 12 : hour)) + ":" + minute + ":" + second);
                         }
                     });
                     try {
