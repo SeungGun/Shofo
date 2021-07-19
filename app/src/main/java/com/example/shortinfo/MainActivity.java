@@ -71,11 +71,16 @@ public class MainActivity extends AppCompatActivity {
     private TextView worldConfirmedText;
     private TextView worldConfirmedVarText;
     private TextView temperatureText;
-    private TextView weatherText;
     private TextView PM10Text;
     private TextView PM2_5Text;
     private TextView ozoneText;
     private TextView weatherLocation;
+    private TextView feelTemperatureText;
+    private TextView currentWeatherStatus;
+    private TextView minTemperature;
+    private TextView maxTemperature;
+    private TextView ultravioletText;
+    private TextView compareYesterday;
     private ArrayList<String> distanceList;
     private String[] vaccineFirst;
     private String[] vaccineSecond;
@@ -143,12 +148,18 @@ public class MainActivity extends AppCompatActivity {
         currentDate = findViewById(R.id.cur_date);
         currentWeeks = findViewById(R.id.weeks);
         temperatureText = findViewById(R.id.temperature);
-        weatherText = findViewById(R.id.weather_text);
         PM10Text = findViewById(R.id.PM10_text);
         PM2_5Text = findViewById(R.id.PM2_5_text);
         ozoneText = findViewById(R.id.ozone_text);
         weatherLocation = findViewById(R.id.location);
         currentLocationWeather = findViewById(R.id.curloc_wt_button);
+        feelTemperatureText = findViewById(R.id.feel_temp);
+        currentWeatherStatus = findViewById(R.id.status);
+        minTemperature = findViewById(R.id.min_temp);
+        maxTemperature = findViewById(R.id.max_temp);
+        ultravioletText = findViewById(R.id.ultraviolet_text);
+        compareYesterday = findViewById(R.id.cmp_yesterday);
+
         currentLocationWeather.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -168,7 +179,7 @@ public class MainActivity extends AppCompatActivity {
                         else{
                             inputAddress = divide[1] +" "+divide[2];
                         }
-                        weatherLocation.setText(inputAddress+" 날씨");
+                        weatherLocation.setText(inputAddress);
                         getWeatherOfLocation();
                     }
                 }
@@ -725,26 +736,59 @@ public class MainActivity extends AppCompatActivity {
                     inputAddress = inputAddress.replace(' ','+');
                     weatherDoc = Jsoup.connect("https://search.naver.com/search.naver?where=nexearch&sm=top_hty&fbm=1&ie=utf8&query="+inputAddress+"+날씨").get();
 
-                    Log.d("weather test",weatherDoc.select("p.info_temperature").first().text()); // * 온도
-                    Log.d("weather test",weatherDoc.select("ul.info_list p.cast_txt").first().text());
-                    Log.d("weather test",weatherDoc.select("span.merge span.min").first().text());
-                    Log.d("weather test",weatherDoc.select("span.merge span.max").first().text());
-                    Log.d("weather test",weatherDoc.select("div.info_data ul.info_list li span.indicator").text());
-                    Log.d("weather test",weatherDoc.select("div.today_area._mainTabContent ul.info_list").text()); // * 이외 정보
-                    Log.d("weather test",weatherDoc.select("div.today_area._mainTabContent div.sub_info dl.indicator").text()); // * 미세먼지 & 오존
+//                    Log.d("weather test",weatherDoc.select("p.info_temperature").first().text()); // * 온도
+//                    Log.d("weather test",weatherDoc.select("ul.info_list p.cast_txt").first().text());
+//                    Log.d("weather test",weatherDoc.select("span.merge span.min").first().text());
+//                    Log.d("weather test",weatherDoc.select("span.merge span.max").first().text());
+//                    Log.d("weather test",weatherDoc.select("div.info_data ul.info_list li span.indicator").text());
+//                    Log.d("weather test",weatherDoc.select("div.today_area._mainTabContent ul.info_list").text()); // * 이외 정보
+//                    Log.d("weather test",weatherDoc.select("div.today_area._mainTabContent div.sub_info dl.indicator").text()); // * 미세먼지 & 오존
 
-                    for(Element e : weatherDoc.select("div.today_area._mainTabContent div.sub_info dl.indicator")){
-                        Log.d("first",e.text());
-                    }
-
-                    for(Element e : weatherDoc.select("div.today_area._mainTabContent ul.info_list")){
-                        Log.d("second",e.text());
-                    }
+//                    for(Element e : weatherDoc.select("div.today_area._mainTabContent div.sub_info dl.indicator")){
+//                        Log.d("first",e.text());
+//                    }
+//
+//                    for(Element e : weatherDoc.select("div.today_area._mainTabContent ul.info_list")){
+//                        Log.d("second",e.text());
+//                    }
                     final String temperature = weatherDoc.select("p.info_temperature").first().text();
                     final String list = weatherDoc.select("div.today_area._mainTabContent ul.info_list").text();
                     final String air_info = weatherDoc.select("div.today_area._mainTabContent div.sub_info dl.indicator").text();
+                    String[] another = list.split(",");
+
+                    final String currentState = another[0];
+                    final String minTemp = weatherDoc.select("span.merge span.min").first().text();
+                    final String maxTemp = weatherDoc.select("span.merge span.max").first().text();
+                    final String[] again = another[1].trim().split(" ");
+
+                    // 0 : 어제보다
+                    // 1 : n도  *
+                    // 2 : 낮아요 or 높아요 *
+                    // 3 : 최저온도 / 최고온도 *
+                    // 4 : 체감온도
+                    // 5 : n도 *
+                    // 6 : 자외선
+                    // 7 : n수준 *
 
                     String[] airs = air_info.split(" ");
+                    final int value;
+                    final String figure;
+                    if(again[7].length() == 3){
+                        value = Integer.parseInt(again[7].substring(0,1));
+                        figure = again[7].substring(1);
+                    }
+                    else if(again[7].length() == 4){
+                        value = Integer.parseInt(again[7].substring(0,2));
+                        figure = again[7].substring(2);
+                    }
+                    else if(again[7].length() == 5){
+                        value = Integer.parseInt(again[7].substring(0,1));
+                        figure = again[7].substring(1);
+                    }
+                    else{
+                        value = Integer.parseInt(again[7].substring(0,2));
+                        figure = again[7].substring(2);
+                    }
                     // 미세먼지, 수치수준, 초미세먼지, 수치수준, 오존지수, 수치수준
                     // index 1, 3, 5의 마지막 두글자 캐기
                     final String pm10Std = airs[1].substring(airs[1].length() - 2);
@@ -753,20 +797,29 @@ public class MainActivity extends AppCompatActivity {
                     PM10Text.setTextColor(Color.parseColor(getColorAccordingStd(pm10Std)));
                     PM2_5Text.setTextColor(Color.parseColor(getColorAccordingStd(pm25Std)));
                     ozoneText.setTextColor(Color.parseColor(getColorAccordingStd(ozoneStd)));
+                    ultravioletText.setTextColor(Color.parseColor(getColorAccordingUltraviolet(value)));
                     final String pm10Figure = airs[1].substring(0, airs[1].length() - 2);
                     final String pm25Figure = airs[3].substring(0, airs[3].length() - 2);
                     final String ozoneFigure = airs[5].substring(0, airs[5].length() - 2);
-                    Log.d("Dwdw",pm10Figure+pm25Figure+ozoneFigure);
+//                    Log.d("Dwdw",pm10Figure+pm25Figure+ozoneFigure);
+
+
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
 
 
-                            PM10Text.setText("미세먼지 : "+pm10Figure+" - "+pm10Std);
-                            PM2_5Text.setText("초미세먼지 : "+pm25Figure+" - "+pm25Std);
-                            ozoneText.setText("오존 수치 : "+ozoneFigure+" - "+ozoneStd);
-                            temperatureText.setText("현재 기온 : "+temperature.replace("도씨",""));
-                            weatherText.setText(list);
+                            PM10Text.setText("미세먼지 "+pm10Std+" ("+pm10Figure+")");
+                            PM2_5Text.setText("초미세먼지 "+pm25Std+" ("+pm25Figure+")");
+                            ozoneText.setText("오존 수치 "+ozoneStd+" ("+ozoneFigure+")");
+                            ultravioletText.setText("자외선 "+value + " "+figure);
+                            temperatureText.setText(temperature.replace("도씨",""));
+                            //weatherText.setText(list);
+                            minTemperature.setText(minTemp);
+                            maxTemperature.setText(maxTemp);
+                            currentWeatherStatus.setText(currentState);
+                            feelTemperatureText.setText(again[4] +" "+again[5]);
+                            compareYesterday.setText(again[0] +" "+again[1] +" "+again[2]);
                             //PM10Text.setText(air_info);
                         }
                     });
@@ -793,5 +846,23 @@ public class MainActivity extends AppCompatActivity {
                 return "#FF0000";
         }
         return "#000000";
+    }
+
+    public String getColorAccordingUltraviolet(int std){
+        if(std <= 2){
+            return "#d2d2d2";
+        }
+        else if(std >=3 && std <=5){
+            return "#ffc300";
+        }
+        else if(std >=6 && std<=7){
+            return "#ff8200";
+        }
+        else if(std >=8 && std <= 10){
+            return "#eb0000";
+        }
+        else{
+            return "#ad19ec";
+        }
     }
 }
