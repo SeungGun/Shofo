@@ -616,6 +616,8 @@ public class MainActivity extends AppCompatActivity {
                                 inputAddress = editText.getText().toString();
                                 getWeatherOfLocation();
                                 weatherLocation.setText(inputAddress+" 날씨");
+                                currentLocationWeather.setBackgroundColor(Color.parseColor("#ffffff"));
+                                useCurrentAddress = false;
                             }
                         });
                 AlertDialog alertDialog1 = builder2.create();
@@ -825,6 +827,9 @@ public class MainActivity extends AppCompatActivity {
                 catch (NullPointerException e){
                     e.printStackTrace();
                 }
+                catch (Exception e){
+                    e.printStackTrace();
+                }
             }
         }).start();
 
@@ -848,7 +853,7 @@ public class MainActivity extends AppCompatActivity {
             return "#d2d2d2";
         }
         else if(std >=3 && std <=5){
-            return "#ffc300";
+            return "#ffd746";
         }
         else if(std >=6 && std<=7){
             return "#ff8200";
