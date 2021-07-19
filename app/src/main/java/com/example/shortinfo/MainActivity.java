@@ -10,6 +10,7 @@ import androidx.core.content.ContextCompat;
 import android.Manifest;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Address;
@@ -104,7 +105,8 @@ public class MainActivity extends AppCompatActivity {
     private static final int PERMISSIONS_REQUEST_CODE = 100;
     public static final String[] REQUIRED_PERMISSIONS = {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION};
     public static final String[] WEEKS = {"일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"};
-
+    public SharedPreferences sharedPreferences;
+    public SharedPreferences.Editor editor;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -113,6 +115,8 @@ public class MainActivity extends AppCompatActivity {
                 WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON |
                 WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
         setContentView(R.layout.activity_main);
+        sharedPreferences = getSharedPreferences("useCurLoc",MODE_PRIVATE);
+        editor = sharedPreferences.edit();
 
         getSupportActionBar().setTitle("Short Information");
         distanceList = new ArrayList<>();
@@ -170,22 +174,13 @@ public class MainActivity extends AppCompatActivity {
                 else{
                     useCurrentAddress = true;
                     currentLocationWeather.setBackgroundColor(Color.parseColor("#46BEFF"));
-
-                    if(address != null){
-                        String[] divide = address.split(" ");
-                        if(area3 != null){
-                            inputAddress = divide[1] +" "+divide[2]+ " " +area3;
-                        }
-                        else{
-                            inputAddress = divide[1] +" "+divide[2];
-                        }
-                        weatherLocation.setText(inputAddress);
-                        getWeatherOfLocation();
-                    }
+                    getCurrentLocationWeather();
                 }
-
+                editor.putBoolean("isCurrent",useCurrentAddress);
+                editor.apply();
             }
         });
+
         //SharedPreference 이용해서 현재 위치로 할 것인지 boolean 값 받아와서 true라면 현재 위치 값 설정하는 initialization 함수 만들기
 
         getInitialLocation(); // 초기 위도, 경도값을 구해 주소정보 가져오기
@@ -194,6 +189,24 @@ public class MainActivity extends AppCompatActivity {
         executeTimeClock(); // 시계 기능
         getVaccineInfo(); // 백신 접종 현황 정보
         getCoronaInfo(); // 코로나 현황 정보
+
+    }
+
+    public void getCurrentLocationWeather() {
+        if(address != null){
+            String[] divide = address.split(" ");
+            if(area3 != null){
+                inputAddress = divide[1] +" "+divide[2]+ " " +area3;
+            }
+            else{
+                inputAddress = divide[1] +" "+divide[2];
+            }
+            weatherLocation.setText(inputAddress);
+            getWeatherOfLocation();
+        }
+        else{
+            Log.d("nullll","dwdw");
+        }
     }
 
     public void getInitialLocation() {
@@ -208,6 +221,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         getAddressUsingNaverAPI();
+
                     }
                 });
             }
@@ -226,8 +240,8 @@ public class MainActivity extends AppCompatActivity {
                     for(Element e : elements){
                         arrayList.add(e.text());
                     }
-                    bundle.putString("today_domestic",arrayList.get(1));
-                    bundle.putString("today_abroad",arrayList.get(2));
+                    bundle.putString("today_domestic",arrayList.get(1) == null ? "데이터 에러" : arrayList.get(1));
+                    bundle.putString("today_abroad",arrayList.get(2) == null ? "데이터 에러" : arrayList.get(2));
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -479,9 +493,18 @@ public class MainActivity extends AppCompatActivity {
                         String finalAddress = area1 + " " + area2 + " " + detailName + " " + detailNumber + " (" +area3 + ", "+ building +")";
                         Log.d("building",building);
                         address = finalAddress;
+
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
+                                if(sharedPreferences.getBoolean("isCurrent",false)){
+                                    useCurrentAddress = sharedPreferences.getBoolean("isCurrent",false);
+                                    currentLocationWeather.setBackgroundColor(Color.parseColor("#46BEFF"));
+                                    getCurrentLocationWeather();
+                                }
+                                else{
+                                    compareYesterday.setText("설정한 위치 및 날씨가 없습니다.");
+                                }
                                 currentLocation.setText(address);
                                 currentLocation.setVisibility(View.VISIBLE);
                                 progressBar.setVisibility(View.GONE);
@@ -553,7 +576,6 @@ public class MainActivity extends AppCompatActivity {
             try {
                 confirmedText.setText("국내 확진자 → " + msg.getData().getString("confirmed"));
                 confirmedVarText.setText(" ▲ " + msg.getData().getString("confirmed_var"));
-                confirmedDetailText.setText("(국내 발생: " + msg.getData().getString("today_domestic") + " , 해외 유입: " + msg.getData().getString("today_abroad") + ")");
                 releaseText.setText("국내 격리해제 → " + msg.getData().getString("release"));
                 releaseVarText.setText(" ▲ " + msg.getData().getString("release_var"));
                 deadText.setText("국내 사망자 → " + msg.getData().getString("dead"));
@@ -566,6 +588,7 @@ public class MainActivity extends AppCompatActivity {
                 worldConfirmedVarText.setText(" ▲ " + msg.getData().getString("world_var"));
                 worldStdTime.setText("※ " + msg.getData().getString("world_std_time"));
                 currentLocation.setText(address);
+                confirmedDetailText.setText("(국내 발생: " + msg.getData().getString("today_domestic") + " , 해외 유입: " + msg.getData().getString("today_abroad") + ")");
             }
             catch (Exception e){
                 e.printStackTrace();
@@ -615,7 +638,7 @@ public class MainActivity extends AppCompatActivity {
                                 //입력한 값을 cache에 저장 및 그 값대로 날씨 웹 URL의 parameter로 주고 파싱
                                 inputAddress = editText.getText().toString();
                                 getWeatherOfLocation();
-                                weatherLocation.setText(inputAddress+" 날씨");
+                                weatherLocation.setText(inputAddress);
                                 currentLocationWeather.setBackgroundColor(Color.parseColor("#ffffff"));
                                 useCurrentAddress = false;
                             }
