@@ -30,6 +30,7 @@ import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -82,7 +83,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView maxTemperature;
     private TextView ultravioletText;
     private TextView compareYesterday;
-
+    private ImageView weatherImage;
     private Bundle bundle;
     private ImageButton currentLocationWeather;
     private ProgressBar progressBar;
@@ -193,6 +194,7 @@ public class MainActivity extends AppCompatActivity {
         maxTemperature = findViewById(R.id.max_temp);
         ultravioletText = findViewById(R.id.ultraviolet_text);
         compareYesterday = findViewById(R.id.cmp_yesterday);
+        weatherImage = findViewById(R.id.weather_image);
     }
 
     public void getCurrentLocationWeather() {
@@ -525,10 +527,13 @@ public class MainActivity extends AppCompatActivity {
                         Log.d("Http Connection Error", "Error");
                     }
                 } catch (MalformedURLException e) {
+                    currentLocation.setText("에러 발생 재시도 바람");
                     e.printStackTrace();
                 } catch (IOException e) {
+                    currentLocation.setText("에러 발생 재시도 바람");
                     e.printStackTrace();
                 } catch (JSONException e) {
+                    currentLocation.setText("에러 발생 재시도 바람");
                     e.printStackTrace();
                 }
             }
@@ -829,7 +834,7 @@ public class MainActivity extends AppCompatActivity {
                             ozoneText.setText("오존 수치 " + ozoneStd + " (" + ozoneFigure + ")");
 
                             if (finalIsUltra)
-                                ultravioletText.setText("자외선 " + finalValue + " " + finalFigure);
+                                ultravioletText.setText("자외선 " + finalFigure + " (" + finalValue+")");
                             else
                                 ultravioletText.setText(again[6] + " " + again[7] + " " + again[8]);
 
@@ -856,13 +861,13 @@ public class MainActivity extends AppCompatActivity {
     public String getColorAccordingStd(String std) {
         switch (std) {
             case "좋음":
-                return "#0000FF";
+                return "#32a1ff";
             case "보통":
-                return "#63CC63";
+                return "#03c75a";
             case "나쁨":
-                return "#FFFF00";
+                return "#fd9b5a";
             case "매우":
-                return "#FF0000";
+                return "#ff5959";
         }
         return "#000000";
     }
@@ -873,9 +878,9 @@ public class MainActivity extends AppCompatActivity {
         } else if (std >= 3 && std <= 5) {
             return "#ffd746";
         } else if (std >= 6 && std <= 7) {
-            return "#ff8200";
+            return "#fd9b5a";
         } else if (std >= 8 && std <= 10) {
-            return "#eb0000";
+            return "#ff5959";
         } else {
             return "#ad19ec";
         }

@@ -337,21 +337,21 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textSize="13pt"
-                    android:textColor="#28AEFF"
+                    android:textColor="#32A1FF"
                     android:padding="6dp"/>
                 <TextView
                     android:text="/"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textSize="13pt"
-                    android:textColor="#828282"
+                    android:textColor="#F2F4F6"
                     />
                 <TextView
                     android:id="@+id/max_temp"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textSize="12pt"
-                    android:textColor="#CD0000"
+                    android:textColor="#FC4C4E"
                     android:padding="6dp"/>
             </LinearLayout>
             <LinearLayout
