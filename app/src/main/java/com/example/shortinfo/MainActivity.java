@@ -82,11 +82,14 @@ public class MainActivity extends AppCompatActivity {
     private TextView maxTemperature;
     private TextView ultravioletText;
     private TextView compareYesterday;
-    private ArrayList<String> distanceList;
-    private String[] vaccineFirst;
-    private String[] vaccineSecond;
+
+    private Bundle bundle;
+    private ImageButton currentLocationWeather;
     private ProgressBar progressBar;
     private GpsTracker gpsTracker;
+
+    private String[] vaccineFirst;
+    private String[] vaccineSecond;
     private String address;
     private String inputAddress;
     private String area1;
@@ -95,8 +98,8 @@ public class MainActivity extends AppCompatActivity {
     private String detailName;
     private String detailNumber;
     private String building;
-    private Bundle bundle;
-    private ImageButton currentLocationWeather;
+    private ArrayList<String> distanceList;
+
     private double latitude;
     private double longitude;
     private boolean useCurrentAddress = false;
@@ -107,6 +110,7 @@ public class MainActivity extends AppCompatActivity {
     public static final String[] WEEKS = {"일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"};
     public SharedPreferences sharedPreferences;
     public SharedPreferences.Editor editor;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -115,22 +119,48 @@ public class MainActivity extends AppCompatActivity {
                 WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON |
                 WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
         setContentView(R.layout.activity_main);
-        sharedPreferences = getSharedPreferences("useCurLoc",MODE_PRIVATE);
-        editor = sharedPreferences.edit();
 
         getSupportActionBar().setTitle("Short Information");
-        distanceList = new ArrayList<>();
-
         final Intent intent = new Intent(getApplicationContext(), ScreenService.class);
         startService(intent);
-
-        bundle = new Bundle();
 
         if (!checkLocationServicesStatus()) {
             showDialogForLocationServiceSetting();
         } else {
             checkRunTimePermission();
         }
+        initializeObjects(); // 오브젝트 초기화 자겁
+
+        currentLocationWeather.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (useCurrentAddress) {
+                    useCurrentAddress = false;
+                    currentLocationWeather.setBackgroundColor(Color.parseColor("#ffffff"));
+                } else {
+                    useCurrentAddress = true;
+                    currentLocationWeather.setBackgroundColor(Color.parseColor("#46BEFF"));
+                    getCurrentLocationWeather();
+                }
+                editor.putBoolean("isCurrent", useCurrentAddress);
+                editor.apply();
+            }
+        });
+
+        getInitialLocation(); // 초기 위도, 경도값을 구해 주소정보 가져오기
+        getRegionDistanceInfo(); // 지역별 거리두기 정보
+        getTodayOccurrence(); // 국내 발생 현황(국내발생 및 해외유입 정보)
+        executeTimeClock(); // 시계 기능
+        getVaccineInfo(); // 백신 접종 현황 정보
+        getCoronaInfo(); // 코로나 현황 정보
+
+    }
+
+    private void initializeObjects() {
+        distanceList = new ArrayList<>();
+        sharedPreferences = getSharedPreferences("useCurLoc", MODE_PRIVATE);
+        editor = sharedPreferences.edit();
+        bundle = new Bundle();
         gpsTracker = new GpsTracker(this);
         progressBar = findViewById(R.id.progressBar);
         currentLocation = findViewById(R.id.cur_location);
@@ -163,49 +193,20 @@ public class MainActivity extends AppCompatActivity {
         maxTemperature = findViewById(R.id.max_temp);
         ultravioletText = findViewById(R.id.ultraviolet_text);
         compareYesterday = findViewById(R.id.cmp_yesterday);
-
-        currentLocationWeather.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(useCurrentAddress){
-                    useCurrentAddress = false;
-                    currentLocationWeather.setBackgroundColor(Color.parseColor("#ffffff"));
-                }
-                else{
-                    useCurrentAddress = true;
-                    currentLocationWeather.setBackgroundColor(Color.parseColor("#46BEFF"));
-                    getCurrentLocationWeather();
-                }
-                editor.putBoolean("isCurrent",useCurrentAddress);
-                editor.apply();
-            }
-        });
-
-        //SharedPreference 이용해서 현재 위치로 할 것인지 boolean 값 받아와서 true라면 현재 위치 값 설정하는 initialization 함수 만들기
-
-        getInitialLocation(); // 초기 위도, 경도값을 구해 주소정보 가져오기
-        getRegionDistanceInfo(); // 지역별 거리두기 정보
-        getTodayOccurrence(); // 국내 발생 현황(국내발생 및 해외유입 정보)
-        executeTimeClock(); // 시계 기능
-        getVaccineInfo(); // 백신 접종 현황 정보
-        getCoronaInfo(); // 코로나 현황 정보
-
     }
 
     public void getCurrentLocationWeather() {
-        if(address != null){
+        if (address != null) {
             String[] divide = address.split(" ");
-            if(area3 != null){
-                inputAddress = divide[1] +" "+divide[2]+ " " +area3;
-            }
-            else{
-                inputAddress = divide[1] +" "+divide[2];
+            if (area3 != null) {
+                inputAddress = divide[1] + " " + divide[2] + " " + area3;
+            } else {
+                inputAddress = divide[1] + " " + divide[2];
             }
             weatherLocation.setText(inputAddress);
             getWeatherOfLocation();
-        }
-        else{
-            Log.d("nullll","dwdw");
+        } else {
+            Log.d("nullll", "dwdw");
         }
     }
 
@@ -229,19 +230,19 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void getTodayOccurrence() {
-        new Thread(){
+        new Thread() {
             @Override
-            public void run(){
+            public void run() {
                 Document document = null;
                 try {
                     document = Jsoup.connect("http://ncov.mohw.go.kr/bdBoardList_Real.do").get();
                     Elements elements = document.select("div.caseTable dd.ca_value p.inner_value");
                     ArrayList<String> arrayList = new ArrayList<>();
-                    for(Element e : elements){
+                    for (Element e : elements) {
                         arrayList.add(e.text());
                     }
-                    bundle.putString("today_domestic",arrayList.get(1) == null ? "데이터 에러" : arrayList.get(1));
-                    bundle.putString("today_abroad",arrayList.get(2) == null ? "데이터 에러" : arrayList.get(2));
+                    bundle.putString("today_domestic", arrayList.get(1) == null ? "데이터 에러" : arrayList.get(1));
+                    bundle.putString("today_abroad", arrayList.get(2) == null ? "데이터 에러" : arrayList.get(2));
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -293,10 +294,9 @@ public class MainActivity extends AppCompatActivity {
 
                     elements = doc.select("div.patients_info div.csp_infoCheck_area._togglor_root a.info_text._trigger");
 
-                    if(elements.text() == null){
-                        bundle.putString("world_std_time","데이터 에러");
-                    }
-                    else{
+                    if (elements.text() == null) {
+                        bundle.putString("world_std_time", "데이터 에러");
+                    } else {
                         int id = elements.text().indexOf("세계현황");
                         String s1 = elements.text().substring(id);
                         int id2 = s1.substring(4).indexOf("세계현황");
@@ -305,8 +305,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
-                }
-                finally {
+                } finally {
                     Message msg = handler.obtainMessage();
                     msg.setData(bundle);
                     handler.sendMessage(msg);
@@ -314,6 +313,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }.start();
     }
+
     public void getVaccineInfo() {
         new Thread(new Runnable() {
             @Override
@@ -325,7 +325,7 @@ public class MainActivity extends AppCompatActivity {
                     Elements elements;
                     elements = vaccineUrl.select("div.vaccine_status_item");
                     boolean flag = false;
-                    if(elements.text() == null){
+                    if (elements.text() == null) {
                         bundle.putString("domestic_vaccine_first", "데이터 에러");
                         bundle.putString("domestic_vaccine_second", "데이터 에러");
                         return;
@@ -381,19 +381,17 @@ public class MainActivity extends AppCompatActivity {
                             }
                             currentDate.setText(year + "년 " + (month + 1) + "월 " + day + "일");
                             String colors;
-                            if(WEEKS[week- 1].equals("일요일")){
+                            if (WEEKS[week - 1].equals("일요일")) {
                                 colors = "#FF0000";
-                            }
-                            else if(WEEKS[week - 1].equals("토요일")){
+                            } else if (WEEKS[week - 1].equals("토요일")) {
                                 colors = "#3CA0E1";
-                            }
-                            else{
+                            } else {
                                 colors = "#000000";
                             }
                             currentWeeks.setTextColor(Color.parseColor(colors));
-                            currentWeeks.setText(WEEKS[week-1]);
+                            currentWeeks.setText(WEEKS[week - 1]);
                             currentTime.setText((isPM ? "오후 " + (hour == 12 ? hour : (hour - 12)) : " 오전 " + (hour == 0 ? 12 : hour)) + ":"
-                                    + (minute < 10 ? "0"+minute : minute) + ":" + (second < 10 ? "0"+second : second));
+                                    + (minute < 10 ? "0" + minute : minute) + ":" + (second < 10 ? "0" + second : second));
                         }
                     });
                     try {
@@ -415,7 +413,7 @@ public class MainActivity extends AppCompatActivity {
                     coronaUrl = Jsoup.connect("http://ncov.mohw.go.kr/regSocdisBoardView.do?brdId=6&brdGubun=68&ncvContSeq=495").get();
 
                     Elements scripts = coronaUrl.getElementsByTag("script");
-                    if(scripts.text() == null){
+                    if (scripts.text() == null) {
                         distanceList.add("데이터 에러");
                         return;
                     }
@@ -476,11 +474,10 @@ public class MainActivity extends AppCompatActivity {
                         String line;
                         String page = "";
                         while ((line = reader.readLine()) != null) {
-                            page += line;
+                            page += line; // 주소 정보가 담긴 json String
                         }
 
-                        Log.d("Address", page);
-                        JSONObject json = new JSONObject(page);
+                        JSONObject json = new JSONObject(page); // convert string to json
 
                         JSONObject untilRegion = json.optJSONArray("results").getJSONObject(0).getJSONObject("region");
 
@@ -490,19 +487,17 @@ public class MainActivity extends AppCompatActivity {
                         detailName = json.optJSONArray("results").getJSONObject(0).getJSONObject("land").optString("name");
                         detailNumber = json.optJSONArray("results").getJSONObject(0).getJSONObject("land").optString("number1");
                         building = json.optJSONArray("results").getJSONObject(0).getJSONObject("land").getJSONObject("addition0").optString("value");
-                        String finalAddress = area1 + " " + area2 + " " + detailName + " " + detailNumber + " (" +area3 + ", "+ building +")";
-                        Log.d("building",building);
-                        address = finalAddress;
+
+                        address = area1 + " " + area2 + " " + detailName + " " + detailNumber + " (" + area3 + ", " + building + ")";
 
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                if(sharedPreferences.getBoolean("isCurrent",false)){
-                                    useCurrentAddress = sharedPreferences.getBoolean("isCurrent",false);
+                                if (sharedPreferences.getBoolean("isCurrent", false)) {
+                                    useCurrentAddress = sharedPreferences.getBoolean("isCurrent", false);
                                     currentLocationWeather.setBackgroundColor(Color.parseColor("#46BEFF"));
                                     getCurrentLocationWeather();
-                                }
-                                else{
+                                } else {
                                     compareYesterday.setText("설정한 위치 및 날씨가 없습니다.");
                                 }
                                 currentLocation.setText(address);
@@ -550,8 +545,6 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 latitude = gpsTracker.getLatitude(); // 위도
                 longitude = gpsTracker.getLongitude(); // 경도
-                Log.d("위도 , 경도", latitude + " , " + longitude);
-                address = getCurrentAddress(latitude, longitude);
                 try {
                     Thread.sleep(100);
                 } catch (InterruptedException e) {
@@ -589,8 +582,7 @@ public class MainActivity extends AppCompatActivity {
                 worldStdTime.setText("※ " + msg.getData().getString("world_std_time"));
                 currentLocation.setText(address);
                 confirmedDetailText.setText("(국내 발생: " + msg.getData().getString("today_domestic") + " , 해외 유입: " + msg.getData().getString("today_abroad") + ")");
-            }
-            catch (Exception e){
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
@@ -753,28 +745,25 @@ public class MainActivity extends AppCompatActivity {
                 || locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
     }
 
-    public void getWeatherOfLocation(){
+    public void getWeatherOfLocation() {
         new Thread(new Runnable() {
             @Override
             public void run() {
                 Document weatherDoc = null;
                 try {
-                    inputAddress = inputAddress.replace(' ','+');
-                    weatherDoc = Jsoup.connect("https://search.naver.com/search.naver?where=nexearch&sm=top_hty&fbm=1&ie=utf8&query="+inputAddress+"+날씨").get();
+                    inputAddress = inputAddress.replace(' ', '+');
+                    weatherDoc = Jsoup.connect("https://search.naver.com/search.naver?where=nexearch&sm=top_hty&fbm=1&ie=utf8&query=" + inputAddress + "+날씨").get();
 
-                    final String temperature = weatherDoc.select("p.info_temperature").first().text();
-                    final String list = weatherDoc.select("div.today_area._mainTabContent ul.info_list").text();
-                    final String air_info = weatherDoc.select("div.today_area._mainTabContent div.sub_info dl.indicator").text();
-                    String[] another = list.split(",");
+                    final String temperature = weatherDoc.select("p.info_temperature").first().text(); // 온도 정보
+                    final String list = weatherDoc.select("div.today_area._mainTabContent ul.info_list").text(); // 이외 정보
+                    final String air_info = weatherDoc.select("div.today_area._mainTabContent div.sub_info dl.indicator").text(); // 대기 정보
 
-                    final String currentState = another[0];
-                    final String minTemp = weatherDoc.select("span.merge span.min").first().text();
-                    final String maxTemp = weatherDoc.select("span.merge span.max").first().text();
-                    final String[] again = another[1].trim().split(" ");
+                    final String[] another = list.split(","); // ,로 구분
 
-                    for(String a : again){
-                        Log.d("dwaaaa",a);
-                    }
+                    final String currentState = another[0]; // 현재 날씨 상태 문구
+                    final String minTemp = weatherDoc.select("span.merge span.min").first().text(); //최저 온도
+                    final String maxTemp = weatherDoc.select("span.merge span.max").first().text(); // 최고 온도
+                    final String[] again = another[1].trim().split(" "); // 공백으로 구분
 
                     // 0 : 어제보다
                     // 1 : n도  *
@@ -782,15 +771,17 @@ public class MainActivity extends AppCompatActivity {
                     // 3 : 최저온도 / 최고온도 *
                     // 4 : 체감온도
                     // 5 : n도 *
-                    // 6 : 자외선
-                    // 7 : n수준 *
-
+                    // 6 : 자외선 / 시간당
+                    // 7 : n수준 * / 강수량
+                    // + 8 : nmm
                     String[] airs = air_info.split(" ");
-                    int value = 0;
-                    String figure = "";
-                    Log.d("dadd",again[7]);
-                    boolean isUltra = true;
-                    if(again.length == 8) {
+
+                    int value = 0; // 자외선 값
+                    String figure = ""; // 자외선 수준
+
+                    boolean isUltra = true; // 자외선을 사용 하는지
+
+                    if (again.length == 8) { // 자외선
                         if (again[7].length() == 3) {
                             value = Integer.parseInt(again[7].substring(0, 1));
                             figure = again[7].substring(1);
@@ -805,20 +796,23 @@ public class MainActivity extends AppCompatActivity {
                             figure = again[7].substring(2);
                         }
                         ultravioletText.setTextColor(Color.parseColor(getColorAccordingUltraviolet(value)));
-                    }
-                    else{
+                    } else {// 강수량
                         isUltra = false;
                         ultravioletText.setTextColor(Color.parseColor("#000000"));
                         // 강수량 정보 대체되는 순간
                     }
+
                     // 미세먼지, 수치수준, 초미세먼지, 수치수준, 오존지수, 수치수준
                     // index 1, 3, 5의 마지막 두글자 캐기
+
                     final String pm10Std = airs[1].substring(airs[1].length() - 2);
                     final String pm25Std = airs[3].substring(airs[3].length() - 2);
                     final String ozoneStd = airs[5].substring(airs[5].length() - 2);
+
                     PM10Text.setTextColor(Color.parseColor(getColorAccordingStd(pm10Std)));
                     PM2_5Text.setTextColor(Color.parseColor(getColorAccordingStd(pm25Std)));
                     ozoneText.setTextColor(Color.parseColor(getColorAccordingStd(ozoneStd)));
+
                     final String pm10Figure = airs[1].substring(0, airs[1].length() - 2);
                     final String pm25Figure = airs[3].substring(0, airs[3].length() - 2);
                     final String ozoneFigure = airs[5].substring(0, airs[5].length() - 2);
@@ -826,38 +820,40 @@ public class MainActivity extends AppCompatActivity {
                     final int finalValue = value;
                     final String finalFigure = figure;
                     final boolean finalIsUltra = isUltra;
+
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            PM10Text.setText("미세먼지 "+pm10Std+" ("+pm10Figure+")");
-                            PM2_5Text.setText("초미세먼지 "+pm25Std+" ("+pm25Figure+")");
-                            ozoneText.setText("오존 수치 "+ozoneStd+" ("+ozoneFigure+")");
-                            if(finalIsUltra)
-                                ultravioletText.setText("자외선 "+ finalValue + " "+ finalFigure);
+                            PM10Text.setText("미세먼지 " + pm10Std + " (" + pm10Figure + ")");
+                            PM2_5Text.setText("초미세먼지 " + pm25Std + " (" + pm25Figure + ")");
+                            ozoneText.setText("오존 수치 " + ozoneStd + " (" + ozoneFigure + ")");
+
+                            if (finalIsUltra)
+                                ultravioletText.setText("자외선 " + finalValue + " " + finalFigure);
                             else
-                                ultravioletText.setText(again[6] + " "+again[7] + " "+ again[8]);
-                            temperatureText.setText(temperature.replace("도씨",""));
+                                ultravioletText.setText(again[6] + " " + again[7] + " " + again[8]);
+
+                            temperatureText.setText(temperature.replace("도씨", ""));
                             minTemperature.setText(minTemp);
                             maxTemperature.setText(maxTemp);
                             currentWeatherStatus.setText(currentState);
-                            feelTemperatureText.setText(again[4] +" "+again[5]);
-                            compareYesterday.setText(again[0] +" "+again[1] +" "+again[2]);
+                            feelTemperatureText.setText(again[4] + " " + again[5]);
+                            compareYesterday.setText(again[0] + " " + again[1] + " " + again[2]);
                         }
                     });
                 } catch (IOException e) {
                     e.printStackTrace();
-                }
-                catch (NullPointerException e){
+                } catch (NullPointerException e) {
                     e.printStackTrace();
-                }
-                catch (Exception e){
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
         }).start();
 
     }
-    public String getColorAccordingStd(String std){
+
+    public String getColorAccordingStd(String std) {
         switch (std) {
             case "좋음":
                 return "#0000FF";
@@ -871,20 +867,16 @@ public class MainActivity extends AppCompatActivity {
         return "#000000";
     }
 
-    public String getColorAccordingUltraviolet(int std){
-        if(std <= 2){
+    public String getColorAccordingUltraviolet(int std) {
+        if (std <= 2) {
             return "#d2d2d2";
-        }
-        else if(std >=3 && std <=5){
+        } else if (std >= 3 && std <= 5) {
             return "#ffd746";
-        }
-        else if(std >=6 && std<=7){
+        } else if (std >= 6 && std <= 7) {
             return "#ff8200";
-        }
-        else if(std >=8 && std <= 10){
+        } else if (std >= 8 && std <= 10) {
             return "#eb0000";
-        }
-        else{
+        } else {
             return "#ad19ec";
         }
     }
