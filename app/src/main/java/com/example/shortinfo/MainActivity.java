@@ -166,36 +166,6 @@ public class MainActivity extends AppCompatActivity {
         executeTimeClock(); // 시계 기능
         getVaccineInfo(); // 백신 접종 현황 정보
         getCoronaInfo(); // 코로나 현황 정보
-
-        new Thread(){
-            @Override
-            public void run(){
-                try {
-                    URL url = new URL("https://ssl.pstatic.net/sstatic/keypage/outside/scui/weather_new/img/weather_svg/icon_wt_05.svg");
-
-                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                    connection.setDoInput(true);
-                    connection.connect();
-
-                    InputStream inputStream = connection.getInputStream();
-
-                    final Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
-
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            GlideToVectorYou.justLoadImage(MainActivity.this, Uri.parse("https://ssl.pstatic.net/sstatic/keypage/outside/scui/weather_new/img/weather_svg/icon_wt_05.svg"),weatherImage);
-
-                            //weatherImage.setImageBitmap(bitmap);
-                        }
-                    });
-                } catch (MalformedURLException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }.start();
     }
 
     Handler handler = new Handler(Looper.getMainLooper()) {
@@ -809,6 +779,29 @@ public class MainActivity extends AppCompatActivity {
                 Document weatherDoc = null;
                 try {
                     inputAddress = inputAddress.replace(' ', '+');
+                    new Thread(){
+                        @Override
+                        public void run(){
+                            try {
+                                Document doc = Jsoup.connect("https://search.naver.com/search.naver?where=nexearch&sm=top_hty&fbm=1&ie=utf8&query=" + inputAddress + "+날씨").get();
+                                String a = doc.select("div.main_info span").attr("class");
+                                Log.d("class ",a);
+                                String state = a.split(" ")[1];
+                                int num = Integer.parseInt(state.substring(2));
+                                final String param = num > 9 ? String.valueOf(num) : "0"+num;
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        GlideToVectorYou.justLoadImage(MainActivity.this, Uri.parse("https://ssl.pstatic.net/sstatic/keypage/outside/scui/weather_new/img/weather_svg/icon_wt_"+param+".svg"),weatherImage);
+                                    }
+                                });
+                            } catch (MalformedURLException e) {
+                                e.printStackTrace();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }.start();
                     weatherDoc = Jsoup.connect("https://search.naver.com/search.naver?where=nexearch&sm=top_hty&fbm=1&ie=utf8&query=" + inputAddress + "+날씨").get();
 
                     final String temperature = weatherDoc.select("p.info_temperature").first().text(); // 온도 정보
