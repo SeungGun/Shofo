@@ -12,15 +12,19 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.LocationManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.provider.Settings;
+import android.util.DebugUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -34,6 +38,8 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.github.twocoffeesoneteam.glidetovectoryou.GlideToVectorYou;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.jsoup.Jsoup;
@@ -43,6 +49,7 @@ import org.jsoup.select.Elements;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -104,6 +111,11 @@ public class MainActivity extends AppCompatActivity {
     private double latitude;
     private double longitude;
     private boolean useCurrentAddress = false;
+    private boolean completeLocation = false;
+    private boolean completeDistance = false;
+    private boolean completeTodayOccurrence =false;
+    private boolean completeVaccine = false;
+    private boolean completeCorona = false;
     public static final int defaultRegionNumber = 8; //경기도
     private static final int GPS_ENABLE_REQUEST_CODE = 2001;
     private static final int PERMISSIONS_REQUEST_CODE = 100;
@@ -155,8 +167,70 @@ public class MainActivity extends AppCompatActivity {
         getVaccineInfo(); // 백신 접종 현황 정보
         getCoronaInfo(); // 코로나 현황 정보
 
+        new Thread(){
+            @Override
+            public void run(){
+                try {
+                    URL url = new URL("https://ssl.pstatic.net/sstatic/keypage/outside/scui/weather_new/img/weather_svg/icon_wt_05.svg");
+
+                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                    connection.setDoInput(true);
+                    connection.connect();
+
+                    InputStream inputStream = connection.getInputStream();
+
+                    final Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
+
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            GlideToVectorYou.justLoadImage(MainActivity.this, Uri.parse("https://ssl.pstatic.net/sstatic/keypage/outside/scui/weather_new/img/weather_svg/icon_wt_05.svg"),weatherImage);
+
+                            //weatherImage.setImageBitmap(bitmap);
+                        }
+                    });
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }.start();
     }
 
+    Handler handler = new Handler(Looper.getMainLooper()) {
+        @Override
+        public void handleMessage(Message msg) {
+            try {
+                Log.d("receive message","hi");
+                //long s = System.currentTimeMillis();
+                while(!completeLocation || !completeCorona || !completeDistance || !completeTodayOccurrence || !completeVaccine){
+
+                }
+//                long e = System.currentTimeMillis();
+//                Log.d("time", ((e-s) / 1000.0)+"");
+//                Log.d("nini","nana");
+                confirmedText.setText("국내 확진자 → " + msg.getData().getString("confirmed"));
+                confirmedVarText.setText(" ▲ " + msg.getData().getString("confirmed_var"));
+                releaseText.setText("국내 격리해제 → " + msg.getData().getString("release"));
+                releaseVarText.setText(" ▲ " + msg.getData().getString("release_var"));
+                deadText.setText("국내 사망자 → " + msg.getData().getString("dead"));
+                deadVarText.setText(" ▲ " + msg.getData().getString("dead_var"));
+                stdDateText.setText("※ 국내 집계 기준 시간 " + msg.getData().getString("today_std_time"));
+                vaccineFirstText.setText(msg.getData().getString("domestic_vaccine_first"));
+                vaccineSecondText.setText(msg.getData().getString("domestic_vaccine_second"));
+                distancingText.setText("※ 거리두기 " + distanceList.get(defaultRegionNumber));
+                worldConfirmedText.setText(" → " + msg.getData().getString("world"));
+                worldConfirmedVarText.setText(" ▲ " + msg.getData().getString("world_var"));
+                worldStdTime.setText("※ " + msg.getData().getString("world_std_time"));
+                currentLocation.setText(address);
+                confirmedDetailText.setText("(국내 발생: " + msg.getData().getString("today_domestic") + " , 해외 유입: " + msg.getData().getString("today_abroad") + ")");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+    };
     private void initializeObjects() {
         distanceList = new ArrayList<>();
         sharedPreferences = getSharedPreferences("useCurLoc", MODE_PRIVATE);
@@ -224,7 +298,6 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         getAddressUsingNaverAPI();
-
                     }
                 });
             }
@@ -245,6 +318,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                     bundle.putString("today_domestic", arrayList.get(1) == null ? "데이터 에러" : arrayList.get(1));
                     bundle.putString("today_abroad", arrayList.get(2) == null ? "데이터 에러" : arrayList.get(2));
+                    completeTodayOccurrence = true;
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -305,11 +379,13 @@ public class MainActivity extends AppCompatActivity {
                         String sub = s1.substring(4 + id2);
                         bundle.putString("world_std_time", sub);
                     }
+                    completeCorona = true;
                 } catch (Exception e) {
                     e.printStackTrace();
                 } finally {
                     Message msg = handler.obtainMessage();
                     msg.setData(bundle);
+                    Log.d("send message","hi");
                     handler.sendMessage(msg);
                 }
             }
@@ -350,7 +426,7 @@ public class MainActivity extends AppCompatActivity {
 
                     bundle.putString("domestic_vaccine_first", firstVacc);
                     bundle.putString("domestic_vaccine_second", secondVacc);
-
+                    completeVaccine = true;
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -449,6 +525,7 @@ public class MainActivity extends AppCompatActivity {
                             break;
                         }
                     }
+                    completeDistance = true;
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -489,8 +566,8 @@ public class MainActivity extends AppCompatActivity {
                         detailName = json.optJSONArray("results").getJSONObject(0).getJSONObject("land").optString("name");
                         detailNumber = json.optJSONArray("results").getJSONObject(0).getJSONObject("land").optString("number1");
                         building = json.optJSONArray("results").getJSONObject(0).getJSONObject("land").getJSONObject("addition0").optString("value");
-
-                        address = area1 + " " + area2 + " " + detailName + " " + detailNumber + " (" + area3 + ", " + building + ")";
+                        Log.d("building",building);
+                        address = area1 + " " + area2 + " " + detailName + " " + detailNumber + " (" + area3 + (building.equals("") ? building : ", " + building) + ")";
 
                         runOnUiThread(new Runnable() {
                             @Override
@@ -505,6 +582,7 @@ public class MainActivity extends AppCompatActivity {
                                 currentLocation.setText(address);
                                 currentLocation.setVisibility(View.VISIBLE);
                                 progressBar.setVisibility(View.GONE);
+                                completeLocation = true;
                             }
                         });
                         // 도 : results[0] -> region -> area1 -> name
@@ -567,32 +645,6 @@ public class MainActivity extends AppCompatActivity {
         String newer = vaccineFirst[5].substring(0, 2) + " " + vaccineFirst[5].substring(2, vaccineFirst[5].length() - 2) + "명";
         return title + percent + "\n " + cumul + newer;
     }
-
-    Handler handler = new Handler(Looper.getMainLooper()) {
-        @Override
-        public void handleMessage(Message msg) {
-            try {
-                confirmedText.setText("국내 확진자 → " + msg.getData().getString("confirmed"));
-                confirmedVarText.setText(" ▲ " + msg.getData().getString("confirmed_var"));
-                releaseText.setText("국내 격리해제 → " + msg.getData().getString("release"));
-                releaseVarText.setText(" ▲ " + msg.getData().getString("release_var"));
-                deadText.setText("국내 사망자 → " + msg.getData().getString("dead"));
-                deadVarText.setText(" ▲ " + msg.getData().getString("dead_var"));
-                stdDateText.setText("※ 국내 집계 기준 시간 " + msg.getData().getString("today_std_time"));
-                vaccineFirstText.setText(msg.getData().getString("domestic_vaccine_first"));
-                vaccineSecondText.setText(msg.getData().getString("domestic_vaccine_second"));
-                distancingText.setText("※ 거리두기 " + distanceList.get(defaultRegionNumber));
-                worldConfirmedText.setText(" → " + msg.getData().getString("world"));
-                worldConfirmedVarText.setText(" ▲ " + msg.getData().getString("world_var"));
-                worldStdTime.setText("※ " + msg.getData().getString("world_std_time"));
-                currentLocation.setText(address);
-                confirmedDetailText.setText("(국내 발생: " + msg.getData().getString("today_domestic") + " , 해외 유입: " + msg.getData().getString("today_abroad") + ")");
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
-    };
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
