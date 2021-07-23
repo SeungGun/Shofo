@@ -90,6 +90,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView maxTemperature;
     private TextView ultravioletText;
     private TextView compareYesterday;
+    private TextView testText;
     private ImageView weatherImage;
     private Bundle bundle;
     private ImageButton currentLocationWeather;
@@ -166,20 +167,17 @@ public class MainActivity extends AppCompatActivity {
         executeTimeClock(); // 시계 기능
         getVaccineInfo(); // 백신 접종 현황 정보
         getCoronaInfo(); // 코로나 현황 정보
+
     }
 
     Handler handler = new Handler(Looper.getMainLooper()) {
         @Override
         public void handleMessage(Message msg) {
             try {
-                Log.d("receive message","hi");
-                //long s = System.currentTimeMillis();
                 while(!completeLocation || !completeCorona || !completeDistance || !completeTodayOccurrence || !completeVaccine){
 
                 }
-//                long e = System.currentTimeMillis();
-//                Log.d("time", ((e-s) / 1000.0)+"");
-//                Log.d("nini","nana");
+
                 confirmedText.setText("국내 확진자 → " + msg.getData().getString("confirmed"));
                 confirmedVarText.setText(" ▲ " + msg.getData().getString("confirmed_var"));
                 releaseText.setText("국내 격리해제 → " + msg.getData().getString("release"));
@@ -239,6 +237,8 @@ public class MainActivity extends AppCompatActivity {
         ultravioletText = findViewById(R.id.ultraviolet_text);
         compareYesterday = findViewById(R.id.cmp_yesterday);
         weatherImage = findViewById(R.id.weather_image);
+
+        testText = findViewById(R.id.test);
     }
 
     public void getCurrentLocationWeather() {
@@ -355,7 +355,6 @@ public class MainActivity extends AppCompatActivity {
                 } finally {
                     Message msg = handler.obtainMessage();
                     msg.setData(bundle);
-                    Log.d("send message","hi");
                     handler.sendMessage(msg);
                 }
             }
@@ -536,7 +535,6 @@ public class MainActivity extends AppCompatActivity {
                         detailName = json.optJSONArray("results").getJSONObject(0).getJSONObject("land").optString("name");
                         detailNumber = json.optJSONArray("results").getJSONObject(0).getJSONObject("land").optString("number1");
                         building = json.optJSONArray("results").getJSONObject(0).getJSONObject("land").getJSONObject("addition0").optString("value");
-                        Log.d("building",building);
                         address = area1 + " " + area2 + " " + detailName + " " + detailNumber + " (" + area3 + (building.equals("") ? building : ", " + building) + ")";
 
                         runOnUiThread(new Runnable() {
@@ -799,6 +797,15 @@ public class MainActivity extends AppCompatActivity {
                                 e.printStackTrace();
                             } catch (IOException e) {
                                 e.printStackTrace();
+                            }
+                            catch (Exception e){
+                                e.printStackTrace();
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        testText.setText("날씨 이미지 오류 발생");
+                                    }
+                                });
                             }
                         }
                     }.start();
