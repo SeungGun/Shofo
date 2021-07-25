@@ -6,14 +6,11 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-
 import android.Manifest;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
@@ -24,7 +21,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.provider.Settings;
-import android.util.DebugUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -49,7 +45,6 @@ import org.jsoup.select.Elements;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -112,11 +107,7 @@ public class MainActivity extends AppCompatActivity {
     private double latitude;
     private double longitude;
     private boolean useCurrentAddress = false;
-    private boolean completeLocation = false;
-    private boolean completeDistance = false;
-    private boolean completeTodayOccurrence =false;
-    private boolean completeVaccine = false;
-    private boolean completeCorona = false;
+
     public static final int defaultRegionNumber = 8; //경기도
     private static final int GPS_ENABLE_REQUEST_CODE = 2001;
     private static final int PERMISSIONS_REQUEST_CODE = 100;
@@ -143,7 +134,7 @@ public class MainActivity extends AppCompatActivity {
         } else {
             checkRunTimePermission();
         }
-        initializeObjects(); // 오브젝트 초기화 자겁
+        initializeObjects(); // 오브젝트 초기화 작업
 
         currentLocationWeather.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -161,7 +152,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        getInitialLocation(); // 초기 위도, 경도값을 구해 주소정보 가져오기
+        getInitialLocation(); // 초기 위도, 경도값을 구해 주소정보 가져오기 +날씨 정보 가져오기
         getRegionDistanceInfo(); // 지역별 거리두기 정보
         getTodayOccurrence(); // 국내 발생 현황(국내발생 및 해외유입 정보)
         executeTimeClock(); // 시계 기능
@@ -174,25 +165,20 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void handleMessage(Message msg) {
             try {
-                while(!completeLocation || !completeCorona || !completeDistance || !completeTodayOccurrence || !completeVaccine){
-
-                }
-
-                confirmedText.setText("국내 확진자 → " + msg.getData().getString("confirmed"));
-                confirmedVarText.setText(" ▲ " + msg.getData().getString("confirmed_var"));
-                releaseText.setText("국내 격리해제 → " + msg.getData().getString("release"));
-                releaseVarText.setText(" ▲ " + msg.getData().getString("release_var"));
-                deadText.setText("국내 사망자 → " + msg.getData().getString("dead"));
-                deadVarText.setText(" ▲ " + msg.getData().getString("dead_var"));
-                stdDateText.setText("※ 국내 집계 기준 시간 " + msg.getData().getString("today_std_time"));
-                vaccineFirstText.setText(msg.getData().getString("domestic_vaccine_first"));
-                vaccineSecondText.setText(msg.getData().getString("domestic_vaccine_second"));
-                distancingText.setText("※ 거리두기 " + distanceList.get(defaultRegionNumber));
-                worldConfirmedText.setText(" → " + msg.getData().getString("world"));
-                worldConfirmedVarText.setText(" ▲ " + msg.getData().getString("world_var"));
-                worldStdTime.setText("※ " + msg.getData().getString("world_std_time"));
-                currentLocation.setText(address);
-                confirmedDetailText.setText("(국내 발생: " + msg.getData().getString("today_domestic") + " , 해외 유입: " + msg.getData().getString("today_abroad") + ")");
+                confirmedText.setText("국내 확진자 → " + (msg.getData().getString("confirmed") == null ? "" : msg.getData().getString("confirmed")));
+                confirmedVarText.setText(" ▲ " + (msg.getData().getString("confirmed_var") == null ? "" : msg.getData().getString("confirmed_var")));
+                releaseText.setText("국내 격리해제 → " + (msg.getData().getString("release") == null ? "" : msg.getData().getString("release")));
+                releaseVarText.setText(" ▲ " + (msg.getData().getString("release_var") == null ? "" : msg.getData().getString("release_var")));
+                deadText.setText("국내 사망자 → " + (msg.getData().getString("dead") == null ? "" : msg.getData().getString("dead")));
+                deadVarText.setText(" ▲ " + (msg.getData().getString("dead_var") == null ? "" : msg.getData().getString("dead_var")));
+                stdDateText.setText("※ 국내 집계 기준 시간 " + (msg.getData().getString("today_std_time") == null ? "" : msg.getData().getString("today_std_time")));
+                vaccineFirstText.setText(msg.getData().getString("domestic_vaccine_first") == null ? "" :msg.getData().getString("domestic_vaccine_first"));
+                vaccineSecondText.setText(msg.getData().getString("domestic_vaccine_second") == null ? "" : msg.getData().getString("domestic_vaccine_second"));
+                worldConfirmedText.setText(" → " + (msg.getData().getString("world") == null ? "" : msg.getData().getString("world")));
+                worldConfirmedVarText.setText(" ▲ " + (msg.getData().getString("world_var") == null ? "" : msg.getData().getString("world_var")));
+                worldStdTime.setText("※ " + (msg.getData().getString("world_std_time") == null ? "" : msg.getData().getString("world_std_time")));
+                confirmedDetailText.setText("(국내 발생: " + (msg.getData().getString("today_domestic") == null ? "" : msg.getData().getString("today_domestic"))
+                        + " , 해외 유입: " + (msg.getData().getString("today_abroad") == null ? "" : msg.getData().getString("today_abroad"))+ ")");
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -262,8 +248,6 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 latitude = gpsTracker.getLatitude(); //위도
                 longitude = gpsTracker.getLongitude(); // 경도
-                Log.d("위도 , 경도", latitude + " , " + longitude);
-//                address = getCurrentAddress(latitude, longitude);
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -288,9 +272,13 @@ public class MainActivity extends AppCompatActivity {
                     }
                     bundle.putString("today_domestic", arrayList.get(1) == null ? "데이터 에러" : arrayList.get(1));
                     bundle.putString("today_abroad", arrayList.get(2) == null ? "데이터 에러" : arrayList.get(2));
-                    completeTodayOccurrence = true;
                 } catch (IOException e) {
                     e.printStackTrace();
+                }
+                finally {
+                    Message msg = handler.obtainMessage();
+                    msg.setData(bundle);
+                    handler.sendMessage(msg);
                 }
             }
         }.start();
@@ -349,7 +337,6 @@ public class MainActivity extends AppCompatActivity {
                         String sub = s1.substring(4 + id2);
                         bundle.putString("world_std_time", sub);
                     }
-                    completeCorona = true;
                 } catch (Exception e) {
                     e.printStackTrace();
                 } finally {
@@ -395,9 +382,13 @@ public class MainActivity extends AppCompatActivity {
 
                     bundle.putString("domestic_vaccine_first", firstVacc);
                     bundle.putString("domestic_vaccine_second", secondVacc);
-                    completeVaccine = true;
                 } catch (IOException e) {
                     e.printStackTrace();
+                }
+                finally {
+                    Message msg = handler.obtainMessage();
+                    msg.setData(bundle);
+                    handler.sendMessage(msg);
                 }
 
             }
@@ -494,7 +485,12 @@ public class MainActivity extends AppCompatActivity {
                             break;
                         }
                     }
-                    completeDistance = true;
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            distancingText.setText("※ 거리두기 " + distanceList.get(defaultRegionNumber));
+                        }
+                    });
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -550,7 +546,6 @@ public class MainActivity extends AppCompatActivity {
                                 currentLocation.setText(address);
                                 currentLocation.setVisibility(View.VISIBLE);
                                 progressBar.setVisibility(View.GONE);
-                                completeLocation = true;
                             }
                         });
                         // 도 : results[0] -> region -> area1 -> name
@@ -601,7 +596,12 @@ public class MainActivity extends AppCompatActivity {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                getAddressUsingNaverAPI();
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        getAddressUsingNaverAPI();
+                    }
+                });
             }
         }).start();
     }
@@ -777,38 +777,9 @@ public class MainActivity extends AppCompatActivity {
                 Document weatherDoc = null;
                 try {
                     inputAddress = inputAddress.replace(' ', '+');
-                    new Thread(){
-                        @Override
-                        public void run(){
-                            try {
-                                Document doc = Jsoup.connect("https://search.naver.com/search.naver?where=nexearch&sm=top_hty&fbm=1&ie=utf8&query=" + inputAddress + "+날씨").get();
-                                String a = doc.select("div.main_info span").attr("class");
-                                Log.d("class ",a);
-                                String state = a.split(" ")[1];
-                                int num = Integer.parseInt(state.substring(2));
-                                final String param = num > 9 ? String.valueOf(num) : "0"+num;
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        GlideToVectorYou.justLoadImage(MainActivity.this, Uri.parse("https://ssl.pstatic.net/sstatic/keypage/outside/scui/weather_new/img/weather_svg/icon_wt_"+param+".svg"),weatherImage);
-                                    }
-                                });
-                            } catch (MalformedURLException e) {
-                                e.printStackTrace();
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                            catch (Exception e){
-                                e.printStackTrace();
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        testText.setText("날씨 이미지 오류 발생");
-                                    }
-                                });
-                            }
-                        }
-                    }.start();
+
+                    getWeatherImageAccordingToWeather();
+
                     weatherDoc = Jsoup.connect("https://search.naver.com/search.naver?where=nexearch&sm=top_hty&fbm=1&ie=utf8&query=" + inputAddress + "+날씨").get();
 
                     final String temperature = weatherDoc.select("p.info_temperature").first().text(); // 온도 정보
@@ -908,6 +879,43 @@ public class MainActivity extends AppCompatActivity {
             }
         }).start();
 
+    }
+
+    public void getWeatherImageAccordingToWeather() {
+        new Thread(){
+            @Override
+            public void run(){
+                try {
+                    Document doc = Jsoup.connect("https://search.naver.com/search.naver?where=nexearch&sm=top_hty&fbm=1&ie=utf8&query=" + inputAddress + "+날씨").get();
+                    String imageClassName = doc.select("div.main_info span").attr("class");
+
+                    String state = imageClassName.split(" ")[1];
+                    int num = Integer.parseInt(state.substring(2));
+
+                    final String param = num > 9 ? String.valueOf(num) : "0"+num;
+
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            GlideToVectorYou.justLoadImage(MainActivity.this, Uri.parse("https://ssl.pstatic.net/sstatic/keypage/outside/scui/weather_new/img/weather_svg/icon_wt_"+param+".svg"),weatherImage);
+                        }
+                    });
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                catch (Exception e){
+                    e.printStackTrace();
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            testText.setText("날씨 이미지 오류 발생");
+                        }
+                    });
+                }
+            }
+        }.start();
     }
 
     public String getColorAccordingStd(String std) {
