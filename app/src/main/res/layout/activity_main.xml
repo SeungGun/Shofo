@@ -368,9 +368,11 @@
                     android:id="@+id/temperature"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="24pt"
+                    android:textSize="25pt"
                     android:textColor="#000000"
-                    android:padding="6dp"/>
+                    android:textStyle="bold"
+                    android:padding="6dp"
+                    android:layout_marginBottom="5dp"/>
 
                 <LinearLayout
                     android:layout_marginLeft="5dp"
@@ -391,7 +393,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:textSize="12pt"
-                        android:textColor="#000000"
+                        android:textColor="#666"
                         android:padding="3dp"/>
                 </LinearLayout>
             </LinearLayout>
