@@ -167,7 +167,10 @@ public class MainActivity extends AppCompatActivity {
         executeTimeClock(); // 시계 기능
         getVaccineInfo(); // 백신 접종 현황 정보
         getCoronaInfo(); // 코로나 현황 정보
+        getLiveIssuesKeywords();
+    }
 
+    public void getLiveIssuesKeywords() {
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -216,6 +219,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }).start();
     }
+
     public static void setListViewHeightBasedOnChildren(ListView listView) {
         ListAdapter listAdapter = listView.getAdapter();
         if (listAdapter == null) {
