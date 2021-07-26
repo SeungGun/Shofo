@@ -36,6 +36,7 @@ import android.widget.TextView;
 
 import com.github.twocoffeesoneteam.glidetovectoryou.GlideToVectorYou;
 
+import org.apache.commons.text.StringEscapeUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.jsoup.Jsoup;
@@ -48,7 +49,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.ProtocolException;
 import java.net.URL;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -159,6 +164,37 @@ public class MainActivity extends AppCompatActivity {
         getVaccineInfo(); // 백신 접종 현황 정보
         getCoronaInfo(); // 코로나 현황 정보
 
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                HttpURLConnection urlConnection;
+                try {
+                    URL url = new URL("https://news.nate.com/today/keywordList");
+                    urlConnection = (HttpURLConnection) url.openConnection();
+                    urlConnection.setRequestMethod("GET");
+                    urlConnection.setRequestProperty("Accept-Charset", "UTF-8");
+                    urlConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded;charset=UTF-8");
+                    if (urlConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                        BufferedReader reader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream(), "UTF-8"));
+
+                        String line;
+                        String page = "";
+                        while ((line = reader.readLine()) != null) {
+                            page += line; // 주소 정보가 담긴 json String
+                        }
+                        String conv = URLEncoder.encode(page,"utf-8");
+                        conv = StringEscapeUtils.unescapeJava(page);
+                        Log.d("page",conv);
+                    }
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+                } catch (ProtocolException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
     }
 
     Handler handler = new Handler(Looper.getMainLooper()) {
