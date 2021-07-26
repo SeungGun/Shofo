@@ -451,29 +451,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="* 환율"
-            android:textStyle="bold"
-            android:textColor="#000000"
-            android:textSize="13pt"
-            android:layout_marginLeft="15dp"
-            android:layout_marginTop="3dp"/>
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="@drawable/sector_design"
-            android:layout_margin="8dp">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="15pt"
-                android:textColor="#000000"
-                android:padding="6dp"/>
-        </LinearLayout>
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="* 실시간 이슈"
+            android:text="* 실시간 이슈 키워드"
             android:textStyle="bold"
             android:textColor="#000000"
             android:textSize="13pt"
@@ -486,12 +464,16 @@
             android:background="@drawable/sector_design"
             android:layout_margin="6dp">
             <TextView
-                android:id="@+id/test"
+                android:id="@+id/issue_std_time"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="15pt"
+                android:textSize="12pt"
                 android:textColor="#000000"
                 android:padding="6dp"/>
+            <ListView
+                android:id="@+id/keyword_list"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
         </LinearLayout>
     </LinearLayout>
 

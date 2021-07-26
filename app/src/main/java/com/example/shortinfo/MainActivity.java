@@ -31,6 +31,7 @@ import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -90,12 +91,13 @@ public class MainActivity extends AppCompatActivity {
     private TextView maxTemperature;
     private TextView ultravioletText;
     private TextView compareYesterday;
-    private TextView testText;
+    private TextView issueKeywordStdTime;
     private ImageView weatherImage;
     private Bundle bundle;
     private ImageButton currentLocationWeather;
     private ProgressBar progressBar;
     private GpsTracker gpsTracker;
+    private ListView keywordListView;
 
     private String[] vaccineFirst;
     private String[] vaccineSecond;
@@ -185,12 +187,24 @@ public class MainActivity extends AppCompatActivity {
                         String conv = URLEncoder.encode(page,"utf-8");
                         conv = StringEscapeUtils.unescapeJava(page);
                         Log.d("page",conv);
+                        JSONObject jsonObject = new JSONObject(conv);
+                        String stdTime = jsonObject.getString("service_dtm");
+                        Log.d("time",stdTime);
+                        JSONObject data = jsonObject.getJSONObject("data");
+                        ArrayList<String> keywordList = new ArrayList<>();
+                        Log.d("aaa",data.toString());
+                        for(int i=0; i<=9; ++i){
+                            keywordList.add(data.getJSONObject(i+"").optString("keyword_service").replace("<br />"," "));
+                            Log.d(i+"dd",keywordList.get(i));
+                        }
                     }
                 } catch (MalformedURLException e) {
                     e.printStackTrace();
                 } catch (ProtocolException e) {
                     e.printStackTrace();
                 } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (JSONException e) {
                     e.printStackTrace();
                 }
             }
@@ -260,7 +274,8 @@ public class MainActivity extends AppCompatActivity {
         compareYesterday = findViewById(R.id.cmp_yesterday);
         weatherImage = findViewById(R.id.weather_image);
 
-        testText = findViewById(R.id.test);
+        issueKeywordStdTime = findViewById(R.id.issue_std_time);
+        keywordListView = findViewById(R.id.keyword_list);
     }
 
     public void getCurrentLocationWeather() {
@@ -943,12 +958,6 @@ public class MainActivity extends AppCompatActivity {
                 }
                 catch (Exception e){
                     e.printStackTrace();
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            testText.setText("날씨 이미지 오류 발생");
-                        }
-                    });
                 }
             }
         }.start();
