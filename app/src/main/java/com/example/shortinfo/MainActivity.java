@@ -27,10 +27,12 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -110,7 +112,7 @@ public class MainActivity extends AppCompatActivity {
     private String detailNumber;
     private String building;
     private ArrayList<String> distanceList;
-
+    private ArrayAdapter<String> adapter;
     private double latitude;
     private double longitude;
     private boolean useCurrentAddress = false;
@@ -184,19 +186,23 @@ public class MainActivity extends AppCompatActivity {
                         while ((line = reader.readLine()) != null) {
                             page += line; // 주소 정보가 담긴 json String
                         }
-                        String conv = URLEncoder.encode(page,"utf-8");
-                        conv = StringEscapeUtils.unescapeJava(page);
-                        Log.d("page",conv);
+                        String conv = StringEscapeUtils.unescapeJava(page);
                         JSONObject jsonObject = new JSONObject(conv);
                         String stdTime = jsonObject.getString("service_dtm");
-                        Log.d("time",stdTime);
                         JSONObject data = jsonObject.getJSONObject("data");
                         ArrayList<String> keywordList = new ArrayList<>();
-                        Log.d("aaa",data.toString());
                         for(int i=0; i<=9; ++i){
-                            keywordList.add(data.getJSONObject(i+"").optString("keyword_service").replace("<br />"," "));
-                            Log.d(i+"dd",keywordList.get(i));
+                            keywordList.add((i+1)+". "+data.getJSONObject(i+"").optString("keyword_service").replace("<br />"," "));
                         }
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                issueKeywordStdTime.setText("※기준 시간 "+ stdTime);
+                                adapter = new ArrayAdapter<>(getApplicationContext(), android.R.layout.simple_list_item_1, keywordList);
+                                keywordListView.setAdapter(adapter);
+                                setListViewHeightBasedOnChildren(keywordListView);
+                            }
+                        });
                     }
                 } catch (MalformedURLException e) {
                     e.printStackTrace();
@@ -210,6 +216,30 @@ public class MainActivity extends AppCompatActivity {
             }
         }).start();
     }
+    public static void setListViewHeightBasedOnChildren(ListView listView) {
+        ListAdapter listAdapter = listView.getAdapter();
+        if (listAdapter == null) {
+            // pre-condition
+            return;
+        }
+
+        int totalHeight = 0;
+
+        int desiredWidth = View.MeasureSpec.makeMeasureSpec(listView.getWidth(), View.MeasureSpec.AT_MOST);
+        for (int i = 0; i < listAdapter.getCount(); i++) {
+            View listItem = listAdapter.getView(i, null, listView);
+            //listItem.measure(0, 0);
+            listItem.measure(desiredWidth, View.MeasureSpec.UNSPECIFIED);
+            totalHeight += listItem.getMeasuredHeight();
+        }
+        ViewGroup.LayoutParams params = listView.getLayoutParams();
+
+        params.height = totalHeight;
+        listView.setLayoutParams(params);
+
+        listView.requestLayout();
+    }
+
 
     Handler handler = new Handler(Looper.getMainLooper()) {
         @Override
