@@ -187,10 +187,10 @@ public class MainActivity extends AppCompatActivity {
                         String line;
                         String page = "";
                         while ((line = reader.readLine()) != null) {
-                            page += line; // 주소 정보가 담긴 json String
+                            page += line;
                         }
-                        String conv = StringEscapeUtils.unescapeJava(page);
-                        JSONObject jsonObject = new JSONObject(conv);
+
+                        JSONObject jsonObject = new JSONObject(page);
                         String stdTime = jsonObject.getString("service_dtm");
                         JSONObject data = jsonObject.getJSONObject("data");
                         ArrayList<String> keywordList = new ArrayList<>();
@@ -605,7 +605,6 @@ public class MainActivity extends AppCompatActivity {
                         while ((line = reader.readLine()) != null) {
                             page += line; // 주소 정보가 담긴 json String
                         }
-
                         JSONObject json = new JSONObject(page); // convert string to json
 
                         JSONObject untilRegion = json.optJSONArray("results").getJSONObject(0).getJSONObject("region");
