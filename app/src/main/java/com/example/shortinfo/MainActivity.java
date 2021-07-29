@@ -6,7 +6,9 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+
 import android.Manifest;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -15,6 +17,8 @@ import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.LocationManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -28,10 +32,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.ProgressBar;
@@ -39,7 +45,6 @@ import android.widget.TextView;
 
 import com.github.twocoffeesoneteam.glidetovectoryou.GlideToVectorYou;
 
-import org.apache.commons.text.StringEscapeUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.jsoup.Jsoup;
@@ -54,9 +59,6 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -97,10 +99,14 @@ public class MainActivity extends AppCompatActivity {
     private ImageView weatherImage;
     private Bundle bundle;
     private ImageButton currentLocationWeather;
+    private Button layoutRefreshButton;
     private ProgressBar progressBar;
+    private ProgressBar networkProgressBar;
     private GpsTracker gpsTracker;
     private ListView keywordListView;
 
+    private LinearLayout backgroundScreen;
+    private LinearLayout foregroundScreen;
     private String[] vaccineFirst;
     private String[] vaccineSecond;
     private String address;
@@ -133,6 +139,46 @@ public class MainActivity extends AppCompatActivity {
                 WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON |
                 WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
         setContentView(R.layout.activity_main);
+        initializeObjects(); // 오브젝트 초기화 작업
+
+        int status = getNetworkConnectState();
+        if (status == 1) { // 와이파이
+        } else if (status == 2) { // 모바일
+        } else { // 연결안됨
+            foregroundScreen.setVisibility(View.GONE);
+            backgroundScreen.setVisibility(View.VISIBLE);
+        }
+
+        layoutRefreshButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (backgroundScreen.getVisibility() == View.VISIBLE) {
+                    layoutRefreshButton.setBackgroundResource(R.drawable.ic_baseline_refresh_24);
+                    int status = getNetworkConnectState();
+                    layoutRefreshButton.setVisibility(View.GONE);
+                    networkProgressBar.setVisibility(View.VISIBLE);
+                    if (status == 1 || status == 2) {
+
+                        layoutRefreshButton.setVisibility(View.GONE);
+                        networkProgressBar.setVisibility(View.VISIBLE);
+
+                        backgroundScreen.setVisibility(View.GONE);
+                        foregroundScreen.setVisibility(View.VISIBLE);
+                        getInitialLocation(); // 초기 위도, 경도값을 구해 주소정보 가져오기 +날씨 정보 가져오기
+                        getRegionDistanceInfo(); // 지역별 거리두기 정보
+                        getTodayOccurrence(); // 국내 발생 현황(국내발생 및 해외유입 정보)
+                        executeTimeClock(); // 시계 기능
+                        getVaccineInfo(); // 백신 접종 현황 정보
+                        getCoronaInfo(); // 코로나 현황 정보
+                        getLiveIssuesKeywords();
+                    } else {
+                        layoutRefreshButton.setVisibility(View.VISIBLE);
+                        networkProgressBar.setVisibility(View.GONE);
+                        layoutRefreshButton.setBackgroundResource(R.drawable.ic_baseline_close_24);
+                    }
+                }
+            }
+        });
 
         getSupportActionBar().setTitle("Short Information");
         final Intent intent = new Intent(getApplicationContext(), ScreenService.class);
@@ -143,7 +189,6 @@ public class MainActivity extends AppCompatActivity {
         } else {
             checkRunTimePermission();
         }
-        initializeObjects(); // 오브젝트 초기화 작업
 
         currentLocationWeather.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -170,6 +215,25 @@ public class MainActivity extends AppCompatActivity {
         getLiveIssuesKeywords();
     }
 
+    public int getNetworkConnectState() {
+        int TYPE_WIFI = 1;
+        int TYPE_MOBILE = 2;
+        int TYPE_NOT_CONNECTED = 3;
+        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+
+        if (networkInfo != null && connectivityManager.getActiveNetworkInfo().isConnected()) {
+            int type = networkInfo.getType();
+            if (type == ConnectivityManager.TYPE_MOBILE) {
+                return TYPE_MOBILE;
+            } else if (type == ConnectivityManager.TYPE_WIFI) {
+                return TYPE_WIFI;
+            }
+        }
+        return TYPE_NOT_CONNECTED;
+    }
+
     public void getLiveIssuesKeywords() {
         new Thread(new Runnable() {
             @Override
@@ -194,13 +258,13 @@ public class MainActivity extends AppCompatActivity {
                         String stdTime = jsonObject.getString("service_dtm");
                         JSONObject data = jsonObject.getJSONObject("data");
                         ArrayList<String> keywordList = new ArrayList<>();
-                        for(int i=0; i<=9; ++i){
-                            keywordList.add((i+1)+". "+data.getJSONObject(i+"").optString("keyword_service").replace("<br />"," "));
+                        for (int i = 0; i <= 9; ++i) {
+                            keywordList.add((i + 1) + ". " + data.getJSONObject(i + "").optString("keyword_service").replace("<br />", " "));
                         }
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                issueKeywordStdTime.setText("※기준 시간 "+ stdTime);
+                                issueKeywordStdTime.setText("※기준 시간 " + stdTime);
                                 adapter = new ArrayAdapter<>(getApplicationContext(), android.R.layout.simple_list_item_1, keywordList);
                                 keywordListView.setAdapter(adapter);
                                 setListViewHeightBasedOnChildren(keywordListView);
@@ -256,25 +320,30 @@ public class MainActivity extends AppCompatActivity {
                 deadText.setText("국내 사망자 → " + (msg.getData().getString("dead") == null ? "" : msg.getData().getString("dead")));
                 deadVarText.setText(" ▲ " + (msg.getData().getString("dead_var") == null ? "" : msg.getData().getString("dead_var")));
                 stdDateText.setText("※ 국내 집계 기준 시간 " + (msg.getData().getString("today_std_time") == null ? "" : msg.getData().getString("today_std_time")));
-                vaccineFirstText.setText(msg.getData().getString("domestic_vaccine_first") == null ? "" :msg.getData().getString("domestic_vaccine_first"));
+                vaccineFirstText.setText(msg.getData().getString("domestic_vaccine_first") == null ? "" : msg.getData().getString("domestic_vaccine_first"));
                 vaccineSecondText.setText(msg.getData().getString("domestic_vaccine_second") == null ? "" : msg.getData().getString("domestic_vaccine_second"));
                 worldConfirmedText.setText(" → " + (msg.getData().getString("world") == null ? "" : msg.getData().getString("world")));
                 worldConfirmedVarText.setText(" ▲ " + (msg.getData().getString("world_var") == null ? "" : msg.getData().getString("world_var")));
                 worldStdTime.setText("※ " + (msg.getData().getString("world_std_time") == null ? "" : msg.getData().getString("world_std_time")));
                 confirmedDetailText.setText("(국내 발생: " + (msg.getData().getString("today_domestic") == null ? "" : msg.getData().getString("today_domestic"))
-                        + " , 해외 유입: " + (msg.getData().getString("today_abroad") == null ? "" : msg.getData().getString("today_abroad"))+ ")");
+                        + " , 해외 유입: " + (msg.getData().getString("today_abroad") == null ? "" : msg.getData().getString("today_abroad")) + ")");
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
 
     };
+
     private void initializeObjects() {
         distanceList = new ArrayList<>();
         sharedPreferences = getSharedPreferences("useCurLoc", MODE_PRIVATE);
         editor = sharedPreferences.edit();
         bundle = new Bundle();
         gpsTracker = new GpsTracker(this);
+        backgroundScreen = findViewById(R.id.background_screen);
+        foregroundScreen = findViewById(R.id.foreground_screen);
+        networkProgressBar = findViewById(R.id.network_progressbar);
+        layoutRefreshButton = findViewById(R.id.layout_refresh);
         progressBar = findViewById(R.id.progressBar);
         currentLocation = findViewById(R.id.cur_location);
         confirmedText = findViewById(R.id.corona_text_confirmed);
@@ -328,6 +397,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void getInitialLocation() {
+        if (gpsTracker == null) {
+            gpsTracker = new GpsTracker(this);
+        }
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -359,8 +431,7 @@ public class MainActivity extends AppCompatActivity {
                     bundle.putString("today_abroad", arrayList.get(2) == null ? "데이터 에러" : arrayList.get(2));
                 } catch (IOException e) {
                     e.printStackTrace();
-                }
-                finally {
+                } finally {
                     Message msg = handler.obtainMessage();
                     msg.setData(bundle);
                     handler.sendMessage(msg);
@@ -469,8 +540,7 @@ public class MainActivity extends AppCompatActivity {
                     bundle.putString("domestic_vaccine_second", secondVacc);
                 } catch (IOException e) {
                     e.printStackTrace();
-                }
-                finally {
+                } finally {
                     Message msg = handler.obtainMessage();
                     msg.setData(bundle);
                     handler.sendMessage(msg);
@@ -605,6 +675,7 @@ public class MainActivity extends AppCompatActivity {
                         while ((line = reader.readLine()) != null) {
                             page += line; // 주소 정보가 담긴 json String
                         }
+                        Log.d("page", page);
                         JSONObject json = new JSONObject(page); // convert string to json
 
                         JSONObject untilRegion = json.optJSONArray("results").getJSONObject(0).getJSONObject("region");
@@ -649,16 +720,16 @@ public class MainActivity extends AppCompatActivity {
                         // 2차 : 시, 군, 구
                         // 3차 : 시, 구, 동, 읍, 면
                     } else {
-                        Log.d("Http Connection Error", "Error");
+                        currentLocation.setText("http error");
                     }
                 } catch (MalformedURLException e) {
-                    currentLocation.setText("에러 발생 재시도 바람");
+                    currentLocation.setText("Malformed");
                     e.printStackTrace();
                 } catch (IOException e) {
-                    currentLocation.setText("에러 발생 재시도 바람");
+                    currentLocation.setText("네트워크 연결이 되어있지 않습니다.");
                     e.printStackTrace();
                 } catch (JSONException e) {
-                    currentLocation.setText("에러 발생 재시도 바람");
+                    currentLocation.setText("위치 서비스가 활성화 되어 있지 않습니다.");
                     e.printStackTrace();
                 }
             }
@@ -666,28 +737,34 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onGetAddress(View view) { // Button Click event
-        gpsTracker.getLocation();
-        currentLocation.setVisibility(View.GONE);
-        progressBar.setVisibility(View.VISIBLE);
+        if (gpsTracker == null) {
+            gpsTracker = new GpsTracker(this);
+        }
+        if (gpsTracker.getLocation() != null) {
+            currentLocation.setVisibility(View.GONE);
+            progressBar.setVisibility(View.VISIBLE);
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                latitude = gpsTracker.getLatitude(); // 위도
-                longitude = gpsTracker.getLongitude(); // 경도
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        getAddressUsingNaverAPI();
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    latitude = gpsTracker.getLatitude(); // 위도
+                    longitude = gpsTracker.getLongitude(); // 경도
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
                     }
-                });
-            }
-        }).start();
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            getAddressUsingNaverAPI();
+                        }
+                    });
+                }
+            }).start();
+        } else {
+            currentLocation.setText("위치 서비스를 사용할 수 없습니다. 재시도 바랍니다.");
+        }
     }
 
     private String processVaccineFirst(String[] vaccineFirst) {
@@ -941,7 +1018,7 @@ public class MainActivity extends AppCompatActivity {
                             ozoneText.setText("오존 수치 " + ozoneStd + " (" + ozoneFigure + ")");
 
                             if (finalIsUltra)
-                                ultravioletText.setText("자외선 " + finalFigure + " (" + finalValue+")");
+                                ultravioletText.setText("자외선 " + finalFigure + " (" + finalValue + ")");
                             else
                                 ultravioletText.setText(again[6] + " " + again[7] + " " + again[8]);
 
@@ -966,9 +1043,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void getWeatherImageAccordingToWeather() {
-        new Thread(){
+        new Thread() {
             @Override
-            public void run(){
+            public void run() {
                 try {
                     Document doc = Jsoup.connect("https://search.naver.com/search.naver?where=nexearch&sm=top_hty&fbm=1&ie=utf8&query=" + inputAddress + "+날씨").get();
                     String imageClassName = doc.select("div.main_info span").attr("class");
@@ -976,20 +1053,19 @@ public class MainActivity extends AppCompatActivity {
                     String state = imageClassName.split(" ")[1];
                     int num = Integer.parseInt(state.substring(2));
 
-                    final String param = num > 9 ? String.valueOf(num) : "0"+num;
+                    final String param = num > 9 ? String.valueOf(num) : "0" + num;
 
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            GlideToVectorYou.justLoadImage(MainActivity.this, Uri.parse("https://ssl.pstatic.net/sstatic/keypage/outside/scui/weather_new/img/weather_svg/icon_wt_"+param+".svg"),weatherImage);
+                            GlideToVectorYou.justLoadImage(MainActivity.this, Uri.parse("https://ssl.pstatic.net/sstatic/keypage/outside/scui/weather_new/img/weather_svg/icon_wt_" + param + ".svg"), weatherImage);
                         }
                     });
                 } catch (MalformedURLException e) {
                     e.printStackTrace();
                 } catch (IOException e) {
                     e.printStackTrace();
-                }
-                catch (Exception e){
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             }

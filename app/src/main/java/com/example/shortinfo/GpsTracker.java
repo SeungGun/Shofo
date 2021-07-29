@@ -37,9 +37,10 @@ public class GpsTracker extends Service implements LocationListener {
 
             boolean isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
             boolean isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
-
+            Log.d("gps", isGPSEnabled+"");
+            Log.d("network",isNetworkEnabled+"");
             if (!isGPSEnabled && !isNetworkEnabled) {
-
+                return null;
             } else {
 
                 int hasFineLocationPermission = ContextCompat.checkSelfPermission(mContext,
@@ -51,7 +52,7 @@ public class GpsTracker extends Service implements LocationListener {
                 if (hasFineLocationPermission == PackageManager.PERMISSION_GRANTED &&
                         hasCoarseLocationPermission == PackageManager.PERMISSION_GRANTED) {
 
-                    ;
+                    Log.d("permission","granted");
                 } else
                     return null;
 
@@ -94,6 +95,7 @@ public class GpsTracker extends Service implements LocationListener {
         catch (Exception e)
         {
             Log.d("@@@", ""+e.toString());
+            return null;
         }
 
         return location;
