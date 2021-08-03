@@ -16,6 +16,8 @@ import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
+import android.location.Location;
+import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -42,6 +44,7 @@ import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.github.twocoffeesoneteam.glidetovectoryou.GlideToVectorYou;
 
@@ -117,6 +120,7 @@ public class MainActivity extends AppCompatActivity {
     private String detailName;
     private String detailNumber;
     private String building;
+    private String groundNumber;
     private ArrayList<String> distanceList;
     private ArrayAdapter<String> adapter;
     private double latitude;
@@ -214,7 +218,15 @@ public class MainActivity extends AppCompatActivity {
         getCoronaInfo(); // 코로나 현황 정보
         getLiveIssuesKeywords();
     }
-
+    private final LocationListener locationListener = new LocationListener() {
+        @Override
+        public void onLocationChanged(@NonNull Location location) {
+            Toast.makeText(getApplicationContext(), "listen", Toast.LENGTH_SHORT).show();
+            longitude = location.getLongitude();
+            latitude = location.getLatitude();
+            getAddressUsingNaverAPI();
+        }
+    };
     public int getNetworkConnectState() {
         int TYPE_WIFI = 1;
         int TYPE_MOBILE = 2;
@@ -400,11 +412,13 @@ public class MainActivity extends AppCompatActivity {
         if (gpsTracker == null) {
             gpsTracker = new GpsTracker(this);
         }
+        gpsTracker.getLocation(locationListener);
         new Thread(new Runnable() {
             @Override
             public void run() {
                 latitude = gpsTracker.getLatitude(); //위도
                 longitude = gpsTracker.getLongitude(); // 경도
+                Log.d("lon, lati", longitude +" " +latitude+" ");
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -659,7 +673,20 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 HttpURLConnection urlConnection;
                 try {
-                    URL url = new URL("https://naveropenapi.apigw.ntruss.com/map-reversegeocode/v2/gc?coords=" + longitude + "," + latitude + "&output=json&orders=roadaddr");
+                    Log.d("lalalla",longitude+", "+latitude);
+                    URL url = new URL("https://naveropenapi.apigw.ntruss.com/map-reversegeocode/v2/gc?coords=" + longitude + "," + latitude + "&orders=legalcode,admcode,addr,roadaddr&output=json");
+
+
+                    //여러 개의 값을 입력할 수 있으며, orders 요청순으로 결과가 표시됩니다.
+                    //예) orders=legalcode
+                    //orders=addr,admcode
+                    //orders=addr,admcode,roadaddr
+                    //orders=legalcode,addr,admcode,roadaddr
+                    // legalcode : 법정동
+                    // admcode : 행정동
+                    // addr : 지번 주소
+                    // roadaddr: 도로명 주소
+
                     urlConnection = (HttpURLConnection) url.openConnection();
                     urlConnection.setRequestMethod("GET");
                     urlConnection.setRequestProperty("Accept-Charset", "UTF-8");
@@ -677,48 +704,95 @@ public class MainActivity extends AppCompatActivity {
                         }
                         Log.d("page", page);
                         JSONObject json = new JSONObject(page); // convert string to json
+                        int statusCode = json.optJSONObject("status").optInt("code");
+                        if(statusCode == 0) {
+                            int orderJsonArrLength = json.optJSONArray("results").length();
+                            switch (orderJsonArrLength) {
+                                case 0: // result 없음
+                                    break;
+                                case 1: // legalcode
+                                    JSONObject legal = json.optJSONArray("results").getJSONObject(0).getJSONObject("region");
+                                    area1 = legal.optJSONObject("area1").optString("name");
+                                    area2 = legal.optJSONObject("area2").optString("name");
+                                    area3 = legal.optJSONObject("area3").optString("name");
+                                    address = area1 + " " + area2 + " " + area3;
+                                    break;
+                                case 2: // legalcode, admcode
+                                    JSONObject admcode = json.optJSONArray("results").getJSONObject(1).getJSONObject("region");
+                                    area1 = admcode.getJSONObject("area1").optString("name");
+                                    area2 = admcode.getJSONObject("area2").optString("name");
+                                    area3 = admcode.getJSONObject("area3").optString("name");
+                                    address = area1 + " " + area2 + " " + area3;
+                                    break;
+                                case 3: // legalcode, admcode, addr
+                                    JSONObject addr = json.optJSONArray("results").getJSONObject(2).getJSONObject("region");
+                                    area1 = addr.getJSONObject("area1").optString("name");
+                                    area2 = addr.getJSONObject("area2").optString("name");
+                                    area3 = addr.getJSONObject("area3").optString("name");
+                                    groundNumber = json.optJSONArray("results").getJSONObject(2).getJSONObject("land").optString("number1");
+                                    address = area1 + " " + area2 + " " + area3 + " " + groundNumber;
+                                    break;
+                                case 4: // legalcode, admcode, addr, roadaddr
+                                    JSONObject roadaddr = json.optJSONArray("results").getJSONObject(3).getJSONObject("region");
+                                    area1 = roadaddr.getJSONObject("area1").optString("name");
+                                    area2 = roadaddr.getJSONObject("area2").optString("name");
+                                    area3 = roadaddr.getJSONObject("area3").optString("name");
+                                    detailName = json.optJSONArray("results").getJSONObject(3).getJSONObject("land").optString("name");
+                                    detailNumber = json.optJSONArray("results").getJSONObject(3).getJSONObject("land").optString("number1");
+                                    building = json.optJSONArray("results").getJSONObject(3).getJSONObject("land").getJSONObject("addition0").optString("value");
+                                    address = area1 + " " + area2 + " " + detailName + " " + detailNumber + " (" + area3 + (building.equals("") ? building : ", " + building) + ")";
 
-                        JSONObject untilRegion = json.optJSONArray("results").getJSONObject(0).getJSONObject("region");
-
-                        area1 = untilRegion.getJSONObject("area1").optString("name");
-                        area2 = untilRegion.getJSONObject("area2").optString("name");
-                        area3 = untilRegion.getJSONObject("area3").optString("name");
-                        detailName = json.optJSONArray("results").getJSONObject(0).getJSONObject("land").optString("name");
-                        detailNumber = json.optJSONArray("results").getJSONObject(0).getJSONObject("land").optString("number1");
-                        building = json.optJSONArray("results").getJSONObject(0).getJSONObject("land").getJSONObject("addition0").optString("value");
-                        address = area1 + " " + area2 + " " + detailName + " " + detailNumber + " (" + area3 + (building.equals("") ? building : ", " + building) + ")";
-
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                if (sharedPreferences.getBoolean("isCurrent", false)) {
-                                    useCurrentAddress = sharedPreferences.getBoolean("isCurrent", false);
-                                    currentLocationWeather.setBackgroundColor(Color.parseColor("#46BEFF"));
-                                    getCurrentLocationWeather();
-                                } else {
-                                    compareYesterday.setText("설정한 위치 및 날씨가 없습니다.");
-                                }
-                                currentLocation.setText(address);
-                                currentLocation.setVisibility(View.VISIBLE);
-                                progressBar.setVisibility(View.GONE);
+                                    break;
                             }
-                        });
-                        // 도 : results[0] -> region -> area1 -> name
-                        // 시 & 구 : results[0] -> region -> area2 -> name
-                        // 동 : results[0] -> region -> area3 -> name
-                        // 상세 주소 도로명 : results[0] -> land /-> number1 : 상세주소(번호)
-                        // name : 상세 명칭(도로명 이름)
-                        // addition0 -> value : 건물
-                        // addition1 -> value : 우편번호
-                        // addition2 -> value : 도로코드
-                        // addition3 -> value : ???
-                        // addition4 -> value : ???
-                        // 도 시 구 도로명 도로번호 (동 건물)
-                        //Reference : https://api.ncloud-docs.com/docs/ai-naver-mapsreversegeocoding-gc
 
-                        // 1차 : 도, 시
-                        // 2차 : 시, 군, 구
-                        // 3차 : 시, 구, 동, 읍, 면
+                            /*Log.d("name", json.optJSONArray("results").getJSONObject(0).optString("name"));
+                            Log.d("name", json.optJSONArray("results").getJSONObject(1).optString("name"));
+                            Log.d("name", json.optJSONArray("results").getJSONObject(2).optString("name"));
+                            Log.d("name", json.optJSONArray("results").getJSONObject(3).optString("name"));
+
+                            JSONObject untilRegion = json.optJSONArray("results").getJSONObject(0).getJSONObject("region");
+
+                            area1 = untilRegion.getJSONObject("area1").optString("name");
+                            area2 = untilRegion.getJSONObject("area2").optString("name");
+                            area3 = untilRegion.getJSONObject("area3").optString("name");
+                            detailName = json.optJSONArray("results").getJSONObject(0).getJSONObject("land").optString("name");
+                            detailNumber = json.optJSONArray("results").getJSONObject(0).getJSONObject("land").optString("number1");
+                            building = json.optJSONArray("results").getJSONObject(0).getJSONObject("land").getJSONObject("addition0").optString("value");
+                            address = area1 + " " + area2 + " " + detailName + " " + detailNumber + " (" + area3 + (building.equals("") ? building : ", " + building) + ")";
+                            */
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    if (sharedPreferences.getBoolean("isCurrent", false)) {
+                                        useCurrentAddress = sharedPreferences.getBoolean("isCurrent", false);
+                                        currentLocationWeather.setBackgroundColor(Color.parseColor("#46BEFF"));
+                                        getCurrentLocationWeather();
+                                    } else {
+                                        compareYesterday.setText("설정한 위치 및 날씨가 없습니다.");
+                                    }
+                                    currentLocation.setText(address);
+                                    currentLocation.setVisibility(View.VISIBLE);
+                                    progressBar.setVisibility(View.GONE);
+                                }
+                            });
+                            //
+                            // 도 : results[0] -> region -> area1 -> name
+                            // 시 & 구 : results[0] -> region -> area2 -> name
+                            // 동 : results[0] -> region -> area3 -> name
+                            // 상세 주소 도로명 : results[0] -> land /-> number1 : 상세주소(번호)
+                            // name : 상세 명칭(도로명 이름)
+                            // addition0 -> value : 건물
+                            // addition1 -> value : 우편번호
+                            // addition2 -> value : 도로코드
+                            // addition3 -> value : ???
+                            // addition4 -> value : ???
+                            // 도 시 구 도로명 도로번호 (동 건물)
+                            //Reference : https://api.ncloud-docs.com/docs/ai-naver-mapsreversegeocoding-gc
+
+                            // 1차 : 도, 시
+                            // 2차 : 시, 군, 구
+                            // 3차 : 시, 구, 동, 읍, 면
+                        }
                     } else {
                         currentLocation.setText("http error");
                     }
@@ -740,7 +814,7 @@ public class MainActivity extends AppCompatActivity {
         if (gpsTracker == null) {
             gpsTracker = new GpsTracker(this);
         }
-        if (gpsTracker.getLocation() != null) {
+        if (gpsTracker.getLocation(locationListener) != null) {
             currentLocation.setVisibility(View.GONE);
             progressBar.setVisibility(View.VISIBLE);
 

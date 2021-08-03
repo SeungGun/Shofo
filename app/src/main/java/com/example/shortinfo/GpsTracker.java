@@ -20,18 +20,18 @@ public class GpsTracker extends Service implements LocationListener {
     double latitude;
     double longitude;
 
-    private static final long MIN_DISTANCE_CHANGE_FOR_UPDATES = 10;
-    private static final long MIN_TIME_BW_UPDATES = 1000 * 60 * 1;
+    private static final long MIN_DISTANCE_CHANGE_FOR_UPDATES = 10; //통지사이의 최소 변경 거리 (m)
+    private static final long MIN_TIME_BW_UPDATES = 500; // 통지사이의 최소 시간 간격 (millisecond)
     protected LocationManager locationManager;
 
 
     public GpsTracker(Context context) {
         this.mContext = context;
-        getLocation();
+        //getLocation();
     }
 
 
-    public Location getLocation() {
+    public Location getLocation(LocationListener locationListener) {
         try {
             locationManager = (LocationManager) mContext.getSystemService(LOCATION_SERVICE);
 
@@ -60,7 +60,7 @@ public class GpsTracker extends Service implements LocationListener {
                 if (isNetworkEnabled) {
 
 
-                    locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, MIN_TIME_BW_UPDATES, MIN_DISTANCE_CHANGE_FOR_UPDATES, this);
+                    locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, MIN_TIME_BW_UPDATES, MIN_DISTANCE_CHANGE_FOR_UPDATES, locationListener);
 
                     if (locationManager != null)
                     {
@@ -78,7 +78,7 @@ public class GpsTracker extends Service implements LocationListener {
                 {
                     if (location == null)
                     {
-                        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, MIN_TIME_BW_UPDATES, MIN_DISTANCE_CHANGE_FOR_UPDATES, this);
+                        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, MIN_TIME_BW_UPDATES, MIN_DISTANCE_CHANGE_FOR_UPDATES, locationListener);
                         if (locationManager != null)
                         {
                             location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
@@ -124,8 +124,12 @@ public class GpsTracker extends Service implements LocationListener {
     @Override
     public void onLocationChanged(Location location)
     {
-    }
+        // 위치 값이 갱신되면 이벤트 발생
+        Log.d("location","changed");
+//        longitude = location.getLongitude();
+//        latitude = location.getLatitude();
 
+    }
     @Override
     public void onProviderDisabled(String provider)
     {
