@@ -62,6 +62,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -216,8 +217,9 @@ public class MainActivity extends AppCompatActivity {
         executeTimeClock(); // 시계 기능
         getVaccineInfo(); // 백신 접종 현황 정보
         getCoronaInfo(); // 코로나 현황 정보
-        getLiveIssuesKeywords();
+        getLiveIssuesKeywords(); // 실시간 이슈 키워드 가져오기
     }
+
     private final LocationListener locationListener = new LocationListener() {
         @Override
         public void onLocationChanged(@NonNull Location location) {
@@ -227,6 +229,7 @@ public class MainActivity extends AppCompatActivity {
             getAddressUsingNaverAPI();
         }
     };
+
     public int getNetworkConnectState() {
         int TYPE_WIFI = 1;
         int TYPE_MOBILE = 2;
@@ -265,7 +268,7 @@ public class MainActivity extends AppCompatActivity {
                         while ((line = reader.readLine()) != null) {
                             page += line;
                         }
-
+                        Log.d("page", page);
                         JSONObject jsonObject = new JSONObject(page);
                         String stdTime = jsonObject.getString("service_dtm");
                         JSONObject data = jsonObject.getJSONObject("data");
@@ -337,8 +340,9 @@ public class MainActivity extends AppCompatActivity {
                 worldConfirmedText.setText(" → " + (msg.getData().getString("world") == null ? "" : msg.getData().getString("world")));
                 worldConfirmedVarText.setText(" ▲ " + (msg.getData().getString("world_var") == null ? "" : msg.getData().getString("world_var")));
                 worldStdTime.setText("※ " + (msg.getData().getString("world_std_time") == null ? "" : msg.getData().getString("world_std_time")));
-                confirmedDetailText.setText("(국내 발생: " + (msg.getData().getString("today_domestic") == null ? "" : msg.getData().getString("today_domestic"))
-                        + " , 해외 유입: " + (msg.getData().getString("today_abroad") == null ? "" : msg.getData().getString("today_abroad")) + ")");
+                DecimalFormat formatter = new DecimalFormat("###,###");
+                confirmedDetailText.setText("(국내 발생: " + (formatter.format(msg.getData().getInt("today_domestic") - msg.getData().getInt("today_abroad")))
+                        + " , 해외 유입: " + (formatter.format(msg.getData().getInt("today_abroad"))) + ")");
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -418,7 +422,7 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 latitude = gpsTracker.getLatitude(); //위도
                 longitude = gpsTracker.getLongitude(); // 경도
-                Log.d("lon, lati", longitude +" " +latitude+" ");
+                Log.d("lon, lati", longitude + " " + latitude + " ");
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -430,19 +434,26 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void getTodayOccurrence() {
-        new Thread() {
+        new Thread(new Runnable() {
             @Override
             public void run() {
                 Document document = null;
                 try {
-                    document = Jsoup.connect("http://ncov.mohw.go.kr/bdBoardList_Real.do").get();
-                    Elements elements = document.select("div.caseTable dd.ca_value p.inner_value");
-                    ArrayList<String> arrayList = new ArrayList<>();
+                    document = Jsoup.connect("http://ncov.mohw.go.kr/bdBoardList_Real.do?brdId=1&brdGubun=11&ncvContSeq=&contSeq=&board_id=&gubun=").get();
+                    Element element = document.select("div.data_table.mgt16").select("tr.sumline td").first();
+                    int abroad = Integer.parseInt(element.text().replaceAll(",", "").trim());
+                    bundle.putInt("today_abroad", abroad);
+                    Elements elements = document.select("div.caseTable ul.ca_body").select("dd.ca_value");
+                    int i = 0;
                     for (Element e : elements) {
-                        arrayList.add(e.text());
+                        if (i == 6) {
+                            int domestic = Integer.parseInt(e.text().replaceAll(",", "").trim());
+                            bundle.putInt("today_domestic", domestic);
+                            break;
+                        }
+                        i++;
                     }
-                    bundle.putString("today_domestic", arrayList.get(1) == null ? "데이터 에러" : arrayList.get(1));
-                    bundle.putString("today_abroad", arrayList.get(2) == null ? "데이터 에러" : arrayList.get(2));
+
                 } catch (IOException e) {
                     e.printStackTrace();
                 } finally {
@@ -451,7 +462,7 @@ public class MainActivity extends AppCompatActivity {
                     handler.sendMessage(msg);
                 }
             }
-        }.start();
+        }).start();
     }
     /* ----------------onCreate()-----------------------------------------------------------*/
 
@@ -468,12 +479,6 @@ public class MainActivity extends AppCompatActivity {
 
                     contents = doc.select("div.status_info li.info_01").select("em.info_variation").first();
                     bundle.putString("confirmed_var", contents.text() == null ? "데이터 에러" : contents.text());
-
-                    contents = doc.select("div.status_info li.info_02").select(".info_num").first();
-                    bundle.putString("inspection", contents.text() == null ? "데이터 에러" : contents.text());
-
-                    contents = doc.select("div.status_info li.info_02").select("em.info_variation").first();
-                    bundle.putString("inspection_var", contents.text() == null ? "데이터 에러" : contents.text());
 
                     contents = doc.select("div.status_info li.info_03").select(".info_num").first();
                     bundle.putString("release", contents.text() == null ? "데이터 에러" : contents.text());
@@ -493,8 +498,11 @@ public class MainActivity extends AppCompatActivity {
                     contents = doc.select("div.status_info.abroad_info li.info_01").select("em.info_variation").first();
                     bundle.putString("world_var", contents.text() == null ? "데이터 에러" : contents.text());
 
+                    Elements ee = doc.selectFirst("div._infect_content").select("div.tooltip_area._tooltip_wrapper").select("div.info_wrap dd.desc._y_first_value");
+                    Log.d("국내", ee.text());
                     Elements elements = doc.select("div.csp_infoCheck_area._togglor_root a.info_text._trigger span._update_time");
                     bundle.putString("today_std_time", elements.text() == null ? "데이터 에러" : elements.text());
+
 
                     elements = doc.select("div.patients_info div.csp_infoCheck_area._togglor_root a.info_text._trigger");
 
@@ -673,7 +681,7 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 HttpURLConnection urlConnection;
                 try {
-                    Log.d("lalalla",longitude+", "+latitude);
+                    Log.d("lalalla", longitude + ", " + latitude);
                     URL url = new URL("https://naveropenapi.apigw.ntruss.com/map-reversegeocode/v2/gc?coords=" + longitude + "," + latitude + "&orders=legalcode,admcode,addr,roadaddr&output=json");
 
 
@@ -705,8 +713,9 @@ public class MainActivity extends AppCompatActivity {
                         Log.d("page", page);
                         JSONObject json = new JSONObject(page); // convert string to json
                         int statusCode = json.optJSONObject("status").optInt("code");
-                        if(statusCode == 0) {
+                        if (statusCode == 0) {
                             int orderJsonArrLength = json.optJSONArray("results").length();
+                            Log.d("length", orderJsonArrLength + " ");
                             switch (orderJsonArrLength) {
                                 case 0: // result 없음
                                     break;
@@ -1132,7 +1141,11 @@ public class MainActivity extends AppCompatActivity {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            GlideToVectorYou.justLoadImage(MainActivity.this, Uri.parse("https://ssl.pstatic.net/sstatic/keypage/outside/scui/weather_new/img/weather_svg/icon_wt_" + param + ".svg"), weatherImage);
+                            try {
+                                GlideToVectorYou.justLoadImage(MainActivity.this, Uri.parse("https://ssl.pstatic.net/sstatic/keypage/outside/scui/weather_new/img/weather_svg/icon_wt_" + param + ".svg"), weatherImage);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
                         }
                     });
                 } catch (MalformedURLException e) {
