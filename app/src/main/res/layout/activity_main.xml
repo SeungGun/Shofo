@@ -321,7 +321,7 @@
                 android:id="@+id/corona_text_distancing"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="9.5pt"
+                android:textSize="9.2pt"
                 android:textStyle="bold"
                 android:textColor="#41A541"
                 android:padding="6dp"/>

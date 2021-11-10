@@ -68,6 +68,9 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * 날씨 파싱 리뉴얼하기
+ */
 public class MainActivity extends AppCompatActivity {
 
     private TextView confirmedText;
@@ -706,12 +709,12 @@ public class MainActivity extends AppCompatActivity {
                         while ((line = reader.readLine()) != null) {
                             page += line; // 주소 정보가 담긴 json String
                         }
-                        Log.d("page", page);
+
                         JSONObject json = new JSONObject(page); // convert string to json
                         int statusCode = json.optJSONObject("status").optInt("code");
                         if (statusCode == 0) {
                             int orderJsonArrLength = json.optJSONArray("results").length();
-                            Log.d("length", orderJsonArrLength + " ");
+                            Log.d("Length of order Json", orderJsonArrLength + " ");
                             switch (orderJsonArrLength) {
                                 case 0: // result 없음
                                     break;
@@ -750,7 +753,8 @@ public class MainActivity extends AppCompatActivity {
                                     break;
                             }
 
-                            /*Log.d("name", json.optJSONArray("results").getJSONObject(0).optString("name"));
+                            /*
+                            Log.d("name", json.optJSONArray("results").getJSONObject(0).optString("name"));
                             Log.d("name", json.optJSONArray("results").getJSONObject(1).optString("name"));
                             Log.d("name", json.optJSONArray("results").getJSONObject(2).optString("name"));
                             Log.d("name", json.optJSONArray("results").getJSONObject(3).optString("name"));
@@ -815,7 +819,11 @@ public class MainActivity extends AppCompatActivity {
         }.start();
     }
 
-    public void onGetAddress(View view) { // Button Click event
+    /**
+     * Button Click event for Refresh Button of current location
+     * @param view
+     */
+    public void onGetAddress(View view) {
         if (gpsTracker == null) {
             gpsTracker = new GpsTracker(this);
         }
@@ -1126,11 +1134,16 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void run() {
                 try {
+                    /**
+                     * Expecting value of @imageClassName : wt_icon icon_wt{number}
+                     * Image format for URL : [URL]icon_wt_{number}.svg
+                     */
                     Document doc = Jsoup.connect("https://search.naver.com/search.naver?where=nexearch&sm=top_hty&fbm=1&ie=utf8&query=" + inputAddress + "+날씨").get();
                     String imageClassName = doc.select("div.weather_graphic div.weather_main").select("i").attr("class");
                     String state = imageClassName.split(" ")[1];
-                    int num = Integer.parseInt(state.split("_")[1].substring(2));
-                    final String param = num > 9 ? String.valueOf(num) : "0" + num;
+                    int num = Integer.parseInt(state.split("_")[1].substring(2)); // get integer value
+
+                    final String param = num > 9 ? String.valueOf(num) : "0" + num; // int to String
 
                     runOnUiThread(new Runnable() {
                         @Override
