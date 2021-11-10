@@ -175,7 +175,7 @@ public class MainActivity extends AppCompatActivity {
                         executeTimeClock(); // 시계 기능
                         getVaccineInfo(); // 백신 접종 현황 정보
                         getCoronaInfo(); // 코로나 현황 정보
-                        getLiveIssuesKeywords();
+                        getLiveIssuesKeywords(); // 실시간 이슈 키워드 정보
                     } else {
                         layoutRefreshButton.setVisibility(View.VISIBLE);
                         networkProgressBar.setVisibility(View.GONE);
@@ -268,7 +268,7 @@ public class MainActivity extends AppCompatActivity {
                         while ((line = reader.readLine()) != null) {
                             page += line;
                         }
-                        Log.d("page", page);
+//                        Log.d("page", page);
                         JSONObject jsonObject = new JSONObject(page);
                         String stdTime = jsonObject.getString("service_dtm");
                         JSONObject data = jsonObject.getJSONObject("data");
@@ -498,11 +498,8 @@ public class MainActivity extends AppCompatActivity {
                     contents = doc.select("div.status_info.abroad_info li.info_01").select("em.info_variation").first();
                     bundle.putString("world_var", contents.text() == null ? "데이터 에러" : contents.text());
 
-                    Elements ee = doc.selectFirst("div._infect_content").select("div.tooltip_area._tooltip_wrapper").select("div.info_wrap dd.desc._y_first_value");
-                    Log.d("국내", ee.text());
                     Elements elements = doc.select("div.csp_infoCheck_area._togglor_root a.info_text._trigger span._update_time");
                     bundle.putString("today_std_time", elements.text() == null ? "데이터 에러" : elements.text());
-
 
                     elements = doc.select("div.patients_info div.csp_infoCheck_area._togglor_root a.info_text._trigger");
 
@@ -683,7 +680,6 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     Log.d("lalalla", longitude + ", " + latitude);
                     URL url = new URL("https://naveropenapi.apigw.ntruss.com/map-reversegeocode/v2/gc?coords=" + longitude + "," + latitude + "&orders=legalcode,admcode,addr,roadaddr&output=json");
-
 
                     //여러 개의 값을 입력할 수 있으며, orders 요청순으로 결과가 표시됩니다.
                     //예) orders=legalcode
@@ -1131,11 +1127,9 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 try {
                     Document doc = Jsoup.connect("https://search.naver.com/search.naver?where=nexearch&sm=top_hty&fbm=1&ie=utf8&query=" + inputAddress + "+날씨").get();
-                    String imageClassName = doc.select("div.main_info span").attr("class");
-
+                    String imageClassName = doc.select("div.weather_graphic div.weather_main").select("i").attr("class");
                     String state = imageClassName.split(" ")[1];
-                    int num = Integer.parseInt(state.substring(2));
-
+                    int num = Integer.parseInt(state.split("_")[1].substring(2));
                     final String param = num > 9 ? String.valueOf(num) : "0" + num;
 
                     runOnUiThread(new Runnable() {
