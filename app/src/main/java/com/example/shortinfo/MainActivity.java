@@ -94,15 +94,16 @@ public class MainActivity extends AppCompatActivity {
     private TextView temperatureText;
     private TextView PM10Text;
     private TextView PM2_5Text;
-    private TextView ozoneText;
     private TextView weatherLocation;
-    private TextView feelTemperatureText;
     private TextView currentWeatherStatus;
-    private TextView minTemperature;
-    private TextView maxTemperature;
     private TextView ultravioletText;
     private TextView compareYesterday;
     private TextView issueKeywordStdTime;
+    private TextView rainPercentText;
+    private TextView humidityPercentText;
+    private TextView windStateText;
+    private TextView windStateValueText;
+    private TextView sunsetValueText;
     private ImageView weatherImage;
     private Bundle bundle;
     private ImageButton currentLocationWeather;
@@ -271,7 +272,6 @@ public class MainActivity extends AppCompatActivity {
                         while ((line = reader.readLine()) != null) {
                             page += line;
                         }
-//                        Log.d("page", page);
                         JSONObject jsonObject = new JSONObject(page);
                         String stdTime = jsonObject.getString("service_dtm");
                         JSONObject data = jsonObject.getJSONObject("data");
@@ -385,17 +385,17 @@ public class MainActivity extends AppCompatActivity {
         temperatureText = findViewById(R.id.temperature);
         PM10Text = findViewById(R.id.PM10_text);
         PM2_5Text = findViewById(R.id.PM2_5_text);
-        ozoneText = findViewById(R.id.ozone_text);
         weatherLocation = findViewById(R.id.location);
         currentLocationWeather = findViewById(R.id.curloc_wt_button);
-        feelTemperatureText = findViewById(R.id.feel_temp);
         currentWeatherStatus = findViewById(R.id.status);
-        minTemperature = findViewById(R.id.min_temp);
-        maxTemperature = findViewById(R.id.max_temp);
         ultravioletText = findViewById(R.id.ultraviolet_text);
         compareYesterday = findViewById(R.id.cmp_yesterday);
         weatherImage = findViewById(R.id.weather_image);
-
+        rainPercentText = findViewById(R.id.rain_percent_value);
+        humidityPercentText = findViewById(R.id.humidity_percent_value);
+        windStateText = findViewById(R.id.wind_state);
+        windStateValueText = findViewById(R.id.wind_state_value);
+        sunsetValueText = findViewById(R.id.sunset_value);
         issueKeywordStdTime = findViewById(R.id.issue_std_time);
         keywordListView = findViewById(R.id.keyword_list);
     }
@@ -1029,92 +1029,54 @@ public class MainActivity extends AppCompatActivity {
                     getWeatherImageAccordingToWeather();
 
                     weatherDoc = Jsoup.connect("https://search.naver.com/search.naver?where=nexearch&sm=top_hty&fbm=1&ie=utf8&query=" + inputAddress + "+날씨").get();
+                    final String temperature = weatherDoc.select("div.temperature_text").first().text().replace("현재 온도",""); // 온도 정보
+                    final String tempInfo = weatherDoc.select("div.temperature_info").first().text(); // 이외 정보
+                    final String airInfo = weatherDoc.select("div.report_card_wrap").first().text(); // 대기 정보
 
-                    final String temperature = weatherDoc.select("p.info_temperature").first().text(); // 온도 정보
-                    final String list = weatherDoc.select("div.today_area._mainTabContent ul.info_list").text(); // 이외 정보
-                    final String air_info = weatherDoc.select("div.today_area._mainTabContent div.sub_info dl.indicator").text(); // 대기 정보
+                    /**
+                     * "temperature_info" text split information (updated 2021-11-11)
+                     * 0 : 어제보다
+                     * 1 : {n}˚
+                     * 2 : 낮아요 or 높아요
+                     * 3 : 날씨 상태(맑음, 흐림등)
+                     * 4 : 강수확률
+                     * 5 : {n}%
+                     * 6 : 습도
+                     * 7 : {n}%
+                     * 8 : 바람(##풍)
+                     * 9 : {n}m/s
+                     */
+                    String[] temps = tempInfo.split(" ");
+                    String[] airs = airInfo.split(" ");
 
-                    final String[] another = list.split(","); // ,로 구분
+                    String cmp = temps[0] + " " + temps[1] + " " + temps[2];
+                    String stateText = temps[3];
 
-                    final String currentState = another[0]; // 현재 날씨 상태 문구
-                    final String minTemp = weatherDoc.select("span.merge span.min").first().text(); //최저 온도
-                    final String maxTemp = weatherDoc.select("span.merge span.max").first().text(); // 최고 온도
-                    final String[] again = another[1].trim().split(" "); // 공백으로 구분
+                    String rainValue = temps[5];
+                    String humidityValue = temps[7];
 
-                    // 0 : 어제보다
-                    // 1 : n도  *
-                    // 2 : 낮아요 or 높아요 *
-                    // 3 : 최저온도 / 최고온도 *
-                    // 4 : 체감온도
-                    // 5 : n도 *
-                    // 6 : 자외선 / 시간당
-                    // 7 : n수준 * / 강수량
-                    // + 8 : nmm
-                    String[] airs = air_info.split(" ");
+                    String windText = temps[8];
+                    String windValue = temps[9];
 
-                    int value = 0; // 자외선 값
-                    String figure = ""; // 자외선 수준
-
-                    boolean isUltra = true; // 자외선을 사용 하는지
-
-                    if (again.length == 8) { // 자외선
-                        if (again[7].length() == 3) {
-                            value = Integer.parseInt(again[7].substring(0, 1));
-                            figure = again[7].substring(1);
-                        } else if (again[7].length() == 4) {
-                            value = Integer.parseInt(again[7].substring(0, 2));
-                            figure = again[7].substring(2);
-                        } else if (again[7].length() == 5) {
-                            value = Integer.parseInt(again[7].substring(0, 1));
-                            figure = again[7].substring(1);
-                        } else {
-                            value = Integer.parseInt(again[7].substring(0, 2));
-                            figure = again[7].substring(2);
-                        }
-                        ultravioletText.setTextColor(Color.parseColor(getColorAccordingUltraviolet(value)));
-                    } else {// 강수량
-                        isUltra = false;
-                        ultravioletText.setTextColor(Color.parseColor("#000000"));
-                        // 강수량 정보 대체되는 순간
-                    }
-
-                    // 미세먼지, 수치수준, 초미세먼지, 수치수준, 오존지수, 수치수준
-                    // index 1, 3, 5의 마지막 두글자 캐기
-
-                    final String pm10Std = airs[1].substring(airs[1].length() - 2);
-                    final String pm25Std = airs[3].substring(airs[3].length() - 2);
-                    final String ozoneStd = airs[5].substring(airs[5].length() - 2);
-
-                    PM10Text.setTextColor(Color.parseColor(getColorAccordingStd(pm10Std)));
-                    PM2_5Text.setTextColor(Color.parseColor(getColorAccordingStd(pm25Std)));
-                    ozoneText.setTextColor(Color.parseColor(getColorAccordingStd(ozoneStd)));
-
-                    final String pm10Figure = airs[1].substring(0, airs[1].length() - 2);
-                    final String pm25Figure = airs[3].substring(0, airs[3].length() - 2);
-                    final String ozoneFigure = airs[5].substring(0, airs[5].length() - 2);
-
-                    final int finalValue = value;
-                    final String finalFigure = figure;
-                    final boolean finalIsUltra = isUltra;
+                    // index 1, 3, 5로 수준 값 가져오기
+                    PM10Text.setTextColor(Color.parseColor(getColorAccordingStd(airs[1])));
+                    PM2_5Text.setTextColor(Color.parseColor(getColorAccordingStd(airs[3])));
+                    ultravioletText.setTextColor(Color.parseColor(getColorAccordingStd(airs[5])));
 
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            PM10Text.setText("미세먼지 " + pm10Std + " (" + pm10Figure + ")");
-                            PM2_5Text.setText("초미세먼지 " + pm25Std + " (" + pm25Figure + ")");
-                            ozoneText.setText("오존 수치 " + ozoneStd + " (" + ozoneFigure + ")");
-
-                            if (finalIsUltra)
-                                ultravioletText.setText("자외선 " + finalFigure + " (" + finalValue + ")");
-                            else
-                                ultravioletText.setText(again[6] + " " + again[7] + " " + again[8]);
-
-                            temperatureText.setText(temperature.replace("도씨", ""));
-                            minTemperature.setText(minTemp);
-                            maxTemperature.setText(maxTemp);
-                            currentWeatherStatus.setText(currentState);
-                            feelTemperatureText.setText(again[4] + " " + again[5]);
-                            compareYesterday.setText(again[0] + " " + again[1] + " " + again[2]);
+                            PM10Text.setText("미세먼지 " + airs[1]);
+                            PM2_5Text.setText("초미세먼지 " + airs[3]);
+                            ultravioletText.setText("자외선 " + airs[5]);
+                            temperatureText.setText(temperature);
+                            currentWeatherStatus.setText(stateText);
+                            compareYesterday.setText(cmp);
+                            rainPercentText.setText(rainValue);
+                            humidityPercentText.setText(humidityValue);
+                            windStateText.setText(windText+" ");
+                            windStateValueText.setText(windValue);
+                            sunsetValueText.setText(airs[7]);
                         }
                     });
                 } catch (IOException e) {
@@ -1178,19 +1140,5 @@ public class MainActivity extends AppCompatActivity {
                 return "#ff5959";
         }
         return "#000000";
-    }
-
-    public String getColorAccordingUltraviolet(int std) {
-        if (std <= 2) {
-            return "#d2d2d2";
-        } else if (std >= 3 && std <= 5) {
-            return "#ffd746";
-        } else if (std >= 6 && std <= 7) {
-            return "#fd9b5a";
-        } else if (std >= 8 && std <= 10) {
-            return "#ff5959";
-        } else {
-            return "#ad19ec";
-        }
     }
 }

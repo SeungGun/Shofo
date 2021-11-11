@@ -365,34 +365,6 @@
                     android:src="@drawable/ic_baseline_my_location_24"/>
             </LinearLayout>
             <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_gravity="right"
-                android:layout_marginRight="6dp">
-                <TextView
-                    android:id="@+id/min_temp"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textSize="13pt"
-                    android:textColor="#32A1FF"
-                    android:padding="2dp"/>
-                <TextView
-                    android:text="/"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textSize="13pt"
-                    android:textColor="#F2F4F6"
-                    />
-                <TextView
-                    android:id="@+id/max_temp"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textSize="12pt"
-                    android:textColor="#FC4C4E"
-                    android:padding="2dp"/>
-            </LinearLayout>
-            <LinearLayout
                 android:gravity="center"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -426,13 +398,6 @@
                         android:textColor="#000000"
                         android:padding="3dp"
                         android:textStyle="bold"/>
-                    <TextView
-                        android:id="@+id/feel_temp"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textSize="12pt"
-                        android:textColor="#666"
-                        android:padding="3dp"/>
                 </LinearLayout>
             </LinearLayout>
             <TextView
@@ -445,45 +410,120 @@
                 android:padding="6dp"/>
 
             <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_gravity="center">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="강수확률 "
+                    android:textSize="10pt"
+                    />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/rain_percent_value"
+                    android:textStyle="bold"
+                    android:textSize="10pt"
+                    android:textColor="#000000"
+                    android:layout_marginRight="10dp"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="습도 "
+                    android:textSize="10pt" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/humidity_percent_value"
+                    android:textStyle="bold"
+                    android:textSize="10pt"
+                    android:textColor="#000000"
+                    android:layout_marginRight="10dp"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/wind_state"
+                    android:textSize="10pt" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/wind_state_value"
+                    android:textStyle="bold"
+                    android:textSize="10pt"
+                    android:textColor="#000000"/>
+            </LinearLayout>
+
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="18dp"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:gravity="center">
                 <TextView
                     android:id="@+id/PM10_text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="8.5pt"
+                    android:textSize="9pt"
                     android:padding="3dp"
+                    android:textStyle="bold"
                     android:layout_marginLeft="3dp"
                     />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="/"/>
                 <TextView
                     android:id="@+id/PM2_5_text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="8.5pt"
+                    android:textSize="9pt"
+                    android:textStyle="bold"
+                    android:layout_marginLeft="5dp"
+                    android:padding="3dp"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="/"/>
+                <TextView
+                    android:id="@+id/ultraviolet_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="9pt"
+                    android:textStyle="bold"
                     android:layout_marginLeft="5dp"
                     android:padding="3dp"/>
             </LinearLayout>
+
             <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-            <TextView
-                android:layout_marginLeft="3dp"
-                android:id="@+id/ozone_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="8.5pt"
-                android:padding="3dp"/>
-            <TextView
-                android:id="@+id/ultraviolet_text"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="8.5pt"
-                android:layout_marginLeft="5dp"
-                android:padding="3dp"/>
+                android:background="@drawable/sector_design"
+                android:orientation="horizontal"
+                android:layout_gravity="center"
+                android:paddingLeft="10dp"
+                android:paddingRight="10dp"
+                android:paddingTop="2dp"
+                android:paddingBottom="2dp"
+                android:layout_margin="3dp">
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="일몰 "
+                    android:textStyle="bold"
+                    android:textSize="10pt"
+                    android:gravity="center"
+                    />
+                <TextView
+                    android:id="@+id/sunset_value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textStyle="bold"
+                    android:textSize="10pt"
+                    android:textColor="#fd9b5a"/>
             </LinearLayout>
+
         </LinearLayout>
 
         <TextView
