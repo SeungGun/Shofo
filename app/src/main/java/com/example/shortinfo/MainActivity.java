@@ -821,6 +821,7 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * Button Click event for Refresh Button of current location
+     *
      * @param view
      */
     public void onGetAddress(View view) {
@@ -1029,7 +1030,7 @@ public class MainActivity extends AppCompatActivity {
                     getWeatherImageAccordingToWeather();
 
                     weatherDoc = Jsoup.connect("https://search.naver.com/search.naver?where=nexearch&sm=top_hty&fbm=1&ie=utf8&query=" + inputAddress + "+날씨").get();
-                    final String temperature = weatherDoc.select("div.temperature_text").first().text().replace("현재 온도",""); // 온도 정보
+                    final String temperature = weatherDoc.select("div.temperature_text").first().text().replace("현재 온도", ""); // 온도 정보
                     final String tempInfo = weatherDoc.select("div.temperature_info").first().text(); // 이외 정보
                     final String airInfo = weatherDoc.select("div.report_card_wrap").first().text(); // 대기 정보
 
@@ -1074,16 +1075,23 @@ public class MainActivity extends AppCompatActivity {
                             compareYesterday.setText(cmp);
                             rainPercentText.setText(rainValue);
                             humidityPercentText.setText(humidityValue);
-                            windStateText.setText(windText+" ");
+                            windStateText.setText(windText + " ");
                             windStateValueText.setText(windValue);
                             sunsetValueText.setText(airs[7]);
                         }
                     });
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (NullPointerException e) {
-                    e.printStackTrace();
                 } catch (Exception e) {
+                    String[] reTryInputAddressSplit = inputAddress.split("\\+");
+                    StringBuilder newAddress = new StringBuilder();
+                    for(int i=0; i<reTryInputAddressSplit.length; ++i){
+                        newAddress.append(reTryInputAddressSplit[i]);
+                        if(i == reTryInputAddressSplit.length -1){
+                            break;
+                        }
+                        newAddress.append("+");
+                    }
+                    inputAddress = newAddress.toString();
+                    getWeatherOfLocation();
                     e.printStackTrace();
                 }
             }
