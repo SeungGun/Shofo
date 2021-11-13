@@ -1083,9 +1083,9 @@ public class MainActivity extends AppCompatActivity {
                 } catch (Exception e) {
                     String[] reTryInputAddressSplit = inputAddress.split("\\+");
                     StringBuilder newAddress = new StringBuilder();
-                    for(int i=0; i<reTryInputAddressSplit.length; ++i){
+                    for (int i = 0; i < reTryInputAddressSplit.length - 1; ++i) {
                         newAddress.append(reTryInputAddressSplit[i]);
-                        if(i == reTryInputAddressSplit.length -1){
+                        if (i == reTryInputAddressSplit.length - 2) {
                             break;
                         }
                         newAddress.append("+");
