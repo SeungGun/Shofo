@@ -1067,9 +1067,9 @@ public class MainActivity extends AppCompatActivity {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            PM10Text.setText("미세먼지 " + airs[1]);
-                            PM2_5Text.setText("초미세먼지 " + airs[3]);
-                            ultravioletText.setText("자외선 " + airs[5]);
+                            PM10Text.setText(airs[1]);
+                            PM2_5Text.setText(airs[3]);
+                            ultravioletText.setText(airs[5]);
                             temperatureText.setText(temperature);
                             currentWeatherStatus.setText(stateText);
                             compareYesterday.setText(cmp);
@@ -1082,6 +1082,11 @@ public class MainActivity extends AppCompatActivity {
                     });
                 } catch (Exception e) {
                     String[] reTryInputAddressSplit = inputAddress.split("\\+");
+
+                    if(reTryInputAddressSplit.length == 1){
+                        compareYesterday.setText("날씨 정보를 가져올 수 없는 지역입니다.");
+                        return;
+                    }
                     StringBuilder newAddress = new StringBuilder();
                     for (int i = 0; i < reTryInputAddressSplit.length - 1; ++i) {
                         newAddress.append(reTryInputAddressSplit[i]);

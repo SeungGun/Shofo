@@ -462,37 +462,61 @@
                 android:orientation="horizontal"
                 android:gravity="center">
                 <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="미세먼지"
+                    android:textSize="9pt"
+                    android:padding="3dp"
+                    android:textColor="#000000"
+                    android:textStyle="bold"
+                    />
+                <TextView
                     android:id="@+id/PM10_text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textSize="9pt"
                     android:padding="3dp"
                     android:textStyle="bold"
-                    android:layout_marginLeft="3dp"
                     />
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="/"/>
                 <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="초미세먼지"
+                    android:textSize="9pt"
+                    android:textColor="#000000"
+                    android:padding="3dp"
+                    android:textStyle="bold"
+                    />
+                <TextView
                     android:id="@+id/PM2_5_text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textSize="9pt"
                     android:textStyle="bold"
-                    android:layout_marginLeft="5dp"
                     android:padding="3dp"/>
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="/"/>
                 <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="자외선"
+                    android:textSize="9pt"
+                    android:textColor="#000000"
+                    android:padding="3dp"
+                    android:textStyle="bold"
+                    />
+                <TextView
                     android:id="@+id/ultraviolet_text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textSize="9pt"
                     android:textStyle="bold"
-                    android:layout_marginLeft="5dp"
                     android:padding="3dp"/>
             </LinearLayout>
 
