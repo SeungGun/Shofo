@@ -68,9 +68,6 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * 날씨 파싱 리뉴얼하기
- */
 public class MainActivity extends AppCompatActivity {
 
     private TextView confirmedText;
@@ -132,7 +129,7 @@ public class MainActivity extends AppCompatActivity {
     private double longitude;
     private boolean useCurrentAddress = false;
 
-    public static final int defaultRegionNumber = 8; //경기도
+    public static final int DEFAULT_REGION_NUMBER = 8; //경기도
     private static final int GPS_ENABLE_REQUEST_CODE = 2001;
     private static final int PERMISSIONS_REQUEST_CODE = 100;
     public static final String[] REQUIRED_PERMISSIONS = {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION};
@@ -227,7 +224,7 @@ public class MainActivity extends AppCompatActivity {
     private final LocationListener locationListener = new LocationListener() {
         @Override
         public void onLocationChanged(@NonNull Location location) {
-            Toast.makeText(getApplicationContext(), "listen", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getApplicationContext(), "위치 정보를 갱신 중입니다...", Toast.LENGTH_SHORT).show();
             longitude = location.getLongitude();
             latitude = location.getLatitude();
             getAddressUsingNaverAPI();
@@ -665,7 +662,7 @@ public class MainActivity extends AppCompatActivity {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            distancingText.setText("※ 거리두기 " + distanceList.get(defaultRegionNumber));
+                            distancingText.setText("※ 거리두기 " + distanceList.get(DEFAULT_REGION_NUMBER));
                         }
                     });
                 } catch (IOException e) {
@@ -681,7 +678,7 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 HttpURLConnection urlConnection;
                 try {
-                    Log.d("lalalla", longitude + ", " + latitude);
+                    Log.d("longitude & latitude", longitude + ", " + latitude);
                     URL url = new URL("https://naveropenapi.apigw.ntruss.com/map-reversegeocode/v2/gc?coords=" + longitude + "," + latitude + "&orders=legalcode,admcode,addr,roadaddr&output=json");
 
                     //여러 개의 값을 입력할 수 있으며, orders 요청순으로 결과가 표시됩니다.
@@ -705,12 +702,12 @@ public class MainActivity extends AppCompatActivity {
                         BufferedReader reader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream(), "UTF-8"));
 
                         String line;
-                        String page = "";
+                        StringBuilder page = new StringBuilder();
                         while ((line = reader.readLine()) != null) {
-                            page += line; // 주소 정보가 담긴 json String
+                            page.append(line); // 주소 정보가 담긴 json String
                         }
 
-                        JSONObject json = new JSONObject(page); // convert string to json
+                        JSONObject json = new JSONObject(page.toString()); // convert string to json
                         int statusCode = json.optJSONObject("status").optInt("code");
                         if (statusCode == 0) {
                             int orderJsonArrLength = json.optJSONArray("results").length();
@@ -749,26 +746,9 @@ public class MainActivity extends AppCompatActivity {
                                     detailNumber = json.optJSONArray("results").getJSONObject(3).getJSONObject("land").optString("number1");
                                     building = json.optJSONArray("results").getJSONObject(3).getJSONObject("land").getJSONObject("addition0").optString("value");
                                     address = area1 + " " + area2 + " " + detailName + " " + detailNumber + " (" + area3 + (building.equals("") ? building : ", " + building) + ")";
-
                                     break;
                             }
 
-                            /*
-                            Log.d("name", json.optJSONArray("results").getJSONObject(0).optString("name"));
-                            Log.d("name", json.optJSONArray("results").getJSONObject(1).optString("name"));
-                            Log.d("name", json.optJSONArray("results").getJSONObject(2).optString("name"));
-                            Log.d("name", json.optJSONArray("results").getJSONObject(3).optString("name"));
-
-                            JSONObject untilRegion = json.optJSONArray("results").getJSONObject(0).getJSONObject("region");
-
-                            area1 = untilRegion.getJSONObject("area1").optString("name");
-                            area2 = untilRegion.getJSONObject("area2").optString("name");
-                            area3 = untilRegion.getJSONObject("area3").optString("name");
-                            detailName = json.optJSONArray("results").getJSONObject(0).getJSONObject("land").optString("name");
-                            detailNumber = json.optJSONArray("results").getJSONObject(0).getJSONObject("land").optString("number1");
-                            building = json.optJSONArray("results").getJSONObject(0).getJSONObject("land").getJSONObject("addition0").optString("value");
-                            address = area1 + " " + area2 + " " + detailName + " " + detailNumber + " (" + area3 + (building.equals("") ? building : ", " + building) + ")";
-                            */
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
