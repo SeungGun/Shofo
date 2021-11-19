@@ -475,7 +475,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="미세먼지"
-                    android:textSize="9pt"
+                    android:textSize="8pt"
                     android:padding="3dp"
                     android:textColor="#000000"
                     android:textStyle="bold"
@@ -484,7 +484,7 @@
                     android:id="@+id/PM10_text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="9pt"
+                    android:textSize="8pt"
                     android:padding="3dp"
                     android:textStyle="bold"
                     />
@@ -496,7 +496,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="초미세먼지"
-                    android:textSize="9pt"
+                    android:textSize="8pt"
                     android:textColor="#000000"
                     android:padding="3dp"
                     android:textStyle="bold"
@@ -505,7 +505,7 @@
                     android:id="@+id/PM2_5_text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="9pt"
+                    android:textSize="8pt"
                     android:textStyle="bold"
                     android:padding="3dp"/>
                 <TextView
@@ -516,7 +516,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="자외선"
-                    android:textSize="9pt"
+                    android:textSize="8pt"
                     android:textColor="#000000"
                     android:padding="3dp"
                     android:textStyle="bold"
@@ -525,7 +525,7 @@
                     android:id="@+id/ultraviolet_text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="9pt"
+                    android:textSize="8pt"
                     android:textStyle="bold"
                     android:padding="3dp"/>
             </LinearLayout>

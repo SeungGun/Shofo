@@ -1129,7 +1129,7 @@ public class MainActivity extends AppCompatActivity {
                 return "#03c75a";
             case "나쁨":
                 return "#fd9b5a";
-            case "매우":
+            case "매우나쁨":
                 return "#ff5959";
         }
         return "#000000";
