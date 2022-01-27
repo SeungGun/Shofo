@@ -83,7 +83,8 @@
                 android:layout_height="wrap_content"
                 android:textColor="#000000"
                 android:textStyle="bold"
-                android:textSize="9pt"/>
+                android:textSize="9pt"
+                android:padding="5dp"/>
 
             <ProgressBar
                 android:visibility="gone"
@@ -152,7 +153,7 @@
                 android:textSize="9pt"
                 android:textStyle="bold"
                 android:textColor="#000000"
-                android:padding="6dp"/>
+                android:padding="8dp"/>
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -171,7 +172,7 @@
                         android:textSize="11pt"
                         android:textStyle="bold"
                         android:textColor="#000000"
-                        android:padding="6dp"/>
+                        android:padding="8dp"/>
                     <TextView
                         android:id="@+id/corona_text_confirmed_var"
                         android:layout_width="wrap_content"
@@ -179,7 +180,7 @@
                         android:textSize="11pt"
                         android:textStyle="bold"
                         android:textColor="#FF0000"
-                        android:padding="6dp"/>
+                        android:padding="8dp"/>
                 </LinearLayout>
 
                 <TextView
@@ -189,7 +190,7 @@
                     android:textSize="11pt"
                     android:textStyle="bold"
                     android:textColor="#46649B"
-                    android:padding="6dp"/>
+                    android:padding="8dp"/>
             </LinearLayout>
 
             <LinearLayout
@@ -206,15 +207,7 @@
                 android:textSize="11pt"
                 android:textStyle="bold"
                 android:textColor="#000000"
-                android:padding="6dp"/>
-                <TextView
-                    android:id="@+id/corona_text_release_var"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textSize="11pt"
-                    android:textStyle="bold"
-                    android:textColor="#0000FF"
-                    android:padding="6dp"/>
+                android:padding="8dp"/>
             </LinearLayout>
             <LinearLayout
                 android:layout_width="match_parent"
@@ -230,7 +223,7 @@
                 android:textSize="11pt"
                 android:textStyle="bold"
                 android:textColor="#000000"
-                android:padding="6dp"/>
+                android:padding="8dp"/>
                 <TextView
                     android:id="@+id/corona_text_dead_var"
                     android:layout_width="wrap_content"
@@ -238,7 +231,7 @@
                     android:textSize="11pt"
                     android:textStyle="bold"
                     android:textColor="#FF0000"
-                    android:padding="6dp"/>
+                    android:padding="8dp"/>
             </LinearLayout>
             <LinearLayout
                 android:layout_width="match_parent"
@@ -254,7 +247,7 @@
                     android:textStyle="bold"
                     android:textColor="#000000"
                     android:text="국내 백신 접종 현황"
-                    android:padding="6dp"/>
+                    android:padding="8dp"/>
             <TextView
                 android:id="@+id/corona_text_vaccine_first"
                 android:layout_width="wrap_content"
@@ -262,7 +255,7 @@
                 android:textSize="10pt"
                 android:textStyle="bold"
                 android:textColor="#0064CD"
-                android:padding="6dp"/>
+                android:padding="8dp"/>
                 <TextView
                     android:id="@+id/corona_text_vaccine_second"
                     android:layout_width="wrap_content"
@@ -270,7 +263,15 @@
                     android:textSize="10pt"
                     android:textStyle="bold"
                     android:textColor="#14148C"
-                    android:padding="6dp"/>
+                    android:padding="8dp"/>
+                <TextView
+                    android:id="@+id/corona_text_vaccine_third"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="10pt"
+                    android:textStyle="bold"
+                    android:textColor="#12758C"
+                    android:padding="8dp"/>
             </LinearLayout>
             <LinearLayout
                 android:layout_width="match_parent"
@@ -286,7 +287,7 @@
                     android:textStyle="bold"
                     android:text="전 세계 확진자"
                     android:textColor="#000000"
-                    android:padding="6dp"/>
+                    android:padding="8dp"/>
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
@@ -306,7 +307,7 @@
                         android:textSize="11pt"
                         android:textStyle="bold"
                         android:textColor="#FF0000"
-                        android:padding="6dp"/>
+                        android:padding="8dp"/>
                 </LinearLayout>
                 <TextView
                     android:id="@+id/corona_text_world_std_time"
@@ -315,13 +316,13 @@
                     android:textSize="8pt"
                     android:textStyle="bold"
                     android:textColor="#000000"
-                    android:padding="6dp"/>
+                    android:padding="8dp"/>
             </LinearLayout>
             <TextView
                 android:id="@+id/corona_text_distancing"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="9.2pt"
+                android:textSize="8.5pt"
                 android:textStyle="bold"
                 android:textColor="#41A541"
                 android:padding="6dp"/>

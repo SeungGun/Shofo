@@ -64,6 +64,7 @@ import java.net.ProtocolException;
 import java.net.URL;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
@@ -74,13 +75,13 @@ public class MainActivity extends AppCompatActivity {
     private TextView confirmedVarText;
     private TextView confirmedDetailText;
     private TextView releaseText;
-    private TextView releaseVarText;
     private TextView deadText;
     private TextView deadVarText;
     private TextView stdDateText;
     private TextView vaccineFirstText;
     private TextView distancingText;
     private TextView vaccineSecondText;
+    private TextView vaccineThirdText;
     private TextView worldStdTime;
     private TextView currentTime;
     private TextView currentDate;
@@ -112,8 +113,9 @@ public class MainActivity extends AppCompatActivity {
 
     private LinearLayout backgroundScreen;
     private LinearLayout foregroundScreen;
-    private String[] vaccineFirst;
-    private String[] vaccineSecond;
+    private String vaccineFirst;
+    private String vaccineSecond;
+    private String vaccineThird;
     private String address;
     private String inputAddress;
     private String area1;
@@ -328,15 +330,15 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void handleMessage(Message msg) {
             try {
-                confirmedText.setText("국내 확진자 → " + (msg.getData().getString("confirmed") == null ? "" : msg.getData().getString("confirmed")));
-                confirmedVarText.setText(" ▲ " + (msg.getData().getString("confirmed_var") == null ? "" : msg.getData().getString("confirmed_var")));
-                releaseText.setText("국내 격리해제 → " + (msg.getData().getString("release") == null ? "" : msg.getData().getString("release")));
-                releaseVarText.setText(" ▲ " + (msg.getData().getString("release_var") == null ? "" : msg.getData().getString("release_var")));
-                deadText.setText("국내 사망자 → " + (msg.getData().getString("dead") == null ? "" : msg.getData().getString("dead")));
-                deadVarText.setText(" ▲ " + (msg.getData().getString("dead_var") == null ? "" : msg.getData().getString("dead_var")));
-                stdDateText.setText("※ 국내 집계 기준 시간 " + (msg.getData().getString("today_std_time") == null ? "" : msg.getData().getString("today_std_time")));
+                confirmedText.setText("확진자 →  " + (msg.getData().getString("confirmed") == null ? "" : msg.getData().getString("confirmed")));
+                confirmedVarText.setText("▲ " + (msg.getData().getString("confirmed_var") == null ? "" : msg.getData().getString("confirmed_var")));
+                releaseText.setText("신규 입원 →  " + (msg.getData().getString("release") == null ? "" : msg.getData().getString("release")));
+                deadText.setText("사망자 →  " + (msg.getData().getString("dead") == null ? "" : msg.getData().getString("dead")));
+                deadVarText.setText("▲ " + (msg.getData().getString("dead_var") == null ? "" : msg.getData().getString("dead_var")));
+                stdDateText.setText("※ 국내 집계 기준 " + (msg.getData().getString("today_std_time") == null ? "" : msg.getData().getString("today_std_time")));
                 vaccineFirstText.setText(msg.getData().getString("domestic_vaccine_first") == null ? "" : msg.getData().getString("domestic_vaccine_first"));
                 vaccineSecondText.setText(msg.getData().getString("domestic_vaccine_second") == null ? "" : msg.getData().getString("domestic_vaccine_second"));
+                vaccineThirdText.setText(msg.getData().getString("domestic_vaccine_third") == null ? "" : msg.getData().getString("domestic_vaccine_third"));
                 worldConfirmedText.setText(" → " + (msg.getData().getString("world") == null ? "" : msg.getData().getString("world")));
                 worldConfirmedVarText.setText(" ▲ " + (msg.getData().getString("world_var") == null ? "" : msg.getData().getString("world_var")));
                 worldStdTime.setText("※ " + (msg.getData().getString("world_std_time") == null ? "" : msg.getData().getString("world_std_time")));
@@ -366,12 +368,12 @@ public class MainActivity extends AppCompatActivity {
         confirmedVarText = findViewById(R.id.corona_text_confirmed_var);
         confirmedDetailText = findViewById(R.id.corona_text_confirmed_detail);
         releaseText = findViewById(R.id.corona_text_release);
-        releaseVarText = findViewById(R.id.corona_text_release_var);
         deadText = findViewById(R.id.corona_text_dead);
         deadVarText = findViewById(R.id.corona_text_dead_var);
         stdDateText = findViewById(R.id.corona_std_date);
         vaccineFirstText = findViewById(R.id.corona_text_vaccine_first);
         vaccineSecondText = findViewById(R.id.corona_text_vaccine_second);
+        vaccineThirdText = findViewById(R.id.corona_text_vaccine_third);
         distancingText = findViewById(R.id.corona_text_distancing);
         worldConfirmedText = findViewById(R.id.corona_text_world);
         worldConfirmedVarText = findViewById(R.id.corona_text_world_var);
@@ -473,36 +475,52 @@ public class MainActivity extends AppCompatActivity {
                 Document doc = null;
                 try {
                     doc = Jsoup.connect("https://search.naver.com/search.naver?where=nexearch&sm=top_hty&fbm=1&ie=utf8&query=%EC%BD%94%EB%A1%9C%EB%82%98").get();
-                    // 코로나
-                    Element contents = doc.select("div.status_info li.info_01").select(".info_num").first();
-                    bundle.putString("confirmed", contents.text() == null ? "데이터 에러" : contents.text());
 
-                    contents = doc.select("div.status_info li.info_01").select("em.info_variation").first();
-                    bundle.putString("confirmed_var", contents.text() == null ? "데이터 에러" : contents.text());
+                    Document officialDoc = Jsoup.connect("http://ncov.mohw.go.kr/").get();
+                    Elements officalElement = officialDoc.select("div.live_left").select("div.occurrenceStatus div.occur_graph tbody");
+                    String[] todayCovidSplit = officalElement.text().trim().split(" ");
+                    /**
+                     * todayCovidSplit array all elements by each index
+                     * [0] : "일일"
+                     * [1] : 사망
+                     * [2] : 재원 위중증
+                     * [3] : 신규 입원
+                     * [4] : 확진
+                     * [5] : "최근"
+                     * [6] : "7일간"
+                     * [7] : "일평균"
+                     * [8] : 사망
+                     * [9] : 재원 위중증
+                     * [10] : 신규 입원
+                     * [11] : 확진
+                     */
 
-                    contents = doc.select("div.status_info li.info_03").select(".info_num").first();
-                    bundle.putString("release", contents.text() == null ? "데이터 에러" : contents.text());
+                    officalElement = officialDoc.select("div.live_left").select("div.occurrenceStatus div.occur_num");
+                    String[] cumulativeCovidSplit = officalElement.text().replaceAll("\\(누적\\)", "").replaceAll("다운로드", "").split(" ");
+                    /**
+                     * cumulativeCovidSplit array all elements by each index
+                     * [0] : (누적)사망 n
+                     * [1] : (누적)확진 n다운로드
+                     * ※ removed string (누적), 다운로드
+                     */
+                    bundle.putString("confirmed", cumulativeCovidSplit[1].replace("확진", "") + "명");
+                    bundle.putString("confirmed_var", todayCovidSplit[4]);
+                    bundle.putString("release", todayCovidSplit[3] + "명");
+                    bundle.putString("dead", cumulativeCovidSplit[0].replace("사망", "") + "명");
+                    bundle.putString("dead_var", todayCovidSplit[1]);
 
-                    contents = doc.select("div.status_info li.info_03").select("em.info_variation").first();
-                    bundle.putString("release_var", contents.text() == null ? "데이터 에러" : contents.text());
+                    officalElement = officialDoc.select("div.live_left").select("div.occurrenceStatus h2.title1 span.livedate");
+                    bundle.putString("today_std_time", officalElement.text().split(",")[0] + ")");
 
-                    contents = doc.select("div.status_info li.info_04").select(".info_num").first();
-                    bundle.putString("dead", contents.text() == null ? "데이터 에러" : contents.text());
+                    //---------------------------------------------------------------------------------------
 
-                    contents = doc.select("div.status_info li.info_04").select("em.info_variation").first();
-                    bundle.putString("dead_var", contents.text() == null ? "데이터 에러" : contents.text());
-
-                    contents = doc.select("div.status_info.abroad_info li.info_01").select(".info_num").first();
-                    bundle.putString("world", contents.text() == null ? "데이터 에러" : contents.text());
+                    Element contents = doc.select("div.status_info.abroad_info li.info_01").select(".info_num").first();
+                    bundle.putString("world", contents.text() == null ? "데이터 에러" : contents.text() + "명");
 
                     contents = doc.select("div.status_info.abroad_info li.info_01").select("em.info_variation").first();
                     bundle.putString("world_var", contents.text() == null ? "데이터 에러" : contents.text());
 
-                    Elements elements = doc.select("div.csp_infoCheck_area._togglor_root a.info_text._trigger span._update_time");
-                    bundle.putString("today_std_time", elements.text() == null ? "데이터 에러" : elements.text());
-
-                    elements = doc.select("div.patients_info div.csp_infoCheck_area._togglor_root a.info_text._trigger");
-
+                    Elements elements = doc.select("div.patients_info div.csp_infoCheck_area._togglor_root a.info_text._trigger");
                     if (elements.text() == null) {
                         bundle.putString("world_std_time", "데이터 에러");
                     } else {
@@ -529,34 +547,53 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 Document vaccineUrl = null;
                 try {
-                    vaccineUrl = Jsoup.connect("https://search.naver.com/search.naver?sm=tab_sug.top&where=nexearch&query=%EC%BD%94%EB%A1%9C%EB%82%98+%EB%B0%B1%EC%8B%A0+%EC%A0%91%EC%A2%85+%ED%98%84%ED%99%A9&oquery=%EC%BD%94%EB%A1%9C%EB%82%98&tqi=hLI4RlprvxsssdKQRURssssss4C-138619&acq=%EC%BD%94%EB%A1%9C%EB%82%98+%EB%B0%B1&acr=4&qdt=0").get();
                     // 코로나 백신
+                    vaccineUrl = Jsoup.connect("http://ncov.mohw.go.kr/").get();
                     Elements elements;
-                    elements = vaccineUrl.select("div.vaccine_status_item");
-                    boolean flag = false;
+                    elements = vaccineUrl.select("div.liveboard_layout").select("div.vaccine_list");
+                    /** HTML of vaccine information is changed (updated on 2022-01-27)
+                     *  변경 전 : elements안에 두개의 데이터가 있었음
+                     *  → 1차 접종, 2차 접종 {비율, 신규 인구수, 총 인구수}
+                     *
+                     * 변경 후 : elements 텍스트안에 모든 데이터가 다 담겨져 있음
+                     *  → 전국 1차 접종, 전국 2차 접종, 전국 3차 접종 {비율, 신규 인구수}
+                     *  {"전국"}을 기준으로 split 함
+                     *  split 결과 : Length = 4 (0번째 인덱스의 경우 empty string 으로 추측)
+                     *
+                     *  ※ 2차 변경 후 : 네이버 → 코로나 공식 홈페이지로 변경
+                     */
                     if (elements.text() == null) {
                         bundle.putString("domestic_vaccine_first", "데이터 에러");
                         bundle.putString("domestic_vaccine_second", "데이터 에러");
+                        bundle.putString("domestic_vaccine_third", "데이터 에러");
                         return;
                     }
-                    for (Element e : elements) {
-                        if (!flag) {
-                            vaccineFirst = e.text().split(" ");
-                            flag = true;
-                        } else {
-                            vaccineSecond = e.text().split(" ");
-                            break;
-                        }
-                    }
-                    //[0] ~ [2] : 전국 n차 접종
-                    //[3] : n%
-                    //[4] : 누적n + 명
-                    //[5] : 신규n증가 - 증가 + 명
-                    String firstVacc = processVaccineFirst(vaccineFirst);
-                    String secondVacc = processVaccineFirst(vaccineSecond);
 
-                    bundle.putString("domestic_vaccine_first", firstVacc);
-                    bundle.putString("domestic_vaccine_second", secondVacc);
+                    String tmp = elements.text().trim();
+                    String[] split = tmp.split(" ");
+                    /**
+                     * ※ split array all elements by each index
+                     * [0] : "1차접종"
+                     * [1] : 1차 접종 비율
+                     * [2] : 1차 접종 누적
+                     * [3] : 1차 접종 신규
+                     * [4] : "2차접종"
+                     * [5] : 2차 접종 비율
+                     * [6] : 2차 접종 누적
+                     * [7] : 2차 접종 신규
+                     * [8] : "3차접종"
+                     * [9] : 3차 접종 비율
+                     * [10] : 3차 접종 누적
+                     * [11] : 3차 접종 신규
+                     * [12] : 3차 접종 60세 이상 비율
+                     */
+                    vaccineFirst = "전국 " + processVaccineFirst(Arrays.copyOfRange(split, 0, 4)); // split 의 0 ~ 3 범위의 배열 복제
+                    vaccineSecond = "전국 " + processVaccineFirst(Arrays.copyOfRange(split, 4, 8)); // split 의 4 ~ 7 범위의 배열 복제
+                    vaccineThird = "전국 " + processVaccineFirst(Arrays.copyOfRange(split, 8, 12)); // split 의 8 ~ 11 범위의 배열 복제
+
+                    bundle.putString("domestic_vaccine_first", vaccineFirst);
+                    bundle.putString("domestic_vaccine_second", vaccineSecond);
+                    bundle.putString("domestic_vaccine_third", vaccineThird);
                 } catch (IOException e) {
                     e.printStackTrace();
                 } finally {
@@ -564,7 +601,6 @@ public class MainActivity extends AppCompatActivity {
                     msg.setData(bundle);
                     handler.sendMessage(msg);
                 }
-
             }
         }).start();
     }
@@ -835,12 +871,21 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private String processVaccineFirst(String[] vaccineFirst) {
-        String title = vaccineFirst[0] + " " + vaccineFirst[1] + " " + vaccineFirst[2] + " : ";
-        String percent = vaccineFirst[3] + " , ";
-        String cumul = vaccineFirst[4].substring(0, 2) + " " + vaccineFirst[4].substring(2) + "명 / ";
-        String newer = vaccineFirst[5].substring(0, 2) + " " + vaccineFirst[5].substring(2, vaccineFirst[5].length() - 2) + "명";
-        return title + percent + "\n " + cumul + newer;
+    private String processVaccineFirst(String[] vaccineSplit) {
+        /**
+         * updated on 2022-01-27
+         * 1. changed entire logic according to change of vaccine information
+         * 2. added defensive part
+         * 3. changed parameter name
+         */
+        if (vaccineSplit == null || vaccineSplit.length == 0) {
+            return "None";
+        }
+        String title = vaccineSplit[0];
+        String percent = vaccineSplit[1];
+        String cumulative = vaccineSplit[2].substring(0, 2) + " " + vaccineSplit[2].substring(2) + "명";
+        String newer = vaccineSplit[3].substring(0, 2) + " " + vaccineSplit[3].substring(2) + "명";
+        return title + " " + percent + "\n" + newer + "  /  " + cumulative;
     }
 
     @Override
@@ -1015,7 +1060,7 @@ public class MainActivity extends AppCompatActivity {
                     final String airInfo = weatherDoc.select("div.report_card_wrap").first().text(); // 대기 정보
 
                     /**
-                     * "temperature_info" text split information (updated 2021-11-11)
+                     * "temperature_info" text split information (updated on 2021-11-11)
                      * 0 : 어제보다
                      * 1 : {n}˚
                      * 2 : 낮아요 or 높아요
@@ -1063,7 +1108,7 @@ public class MainActivity extends AppCompatActivity {
                 } catch (Exception e) {
                     String[] reTryInputAddressSplit = inputAddress.split("\\+");
 
-                    if(reTryInputAddressSplit.length == 1){
+                    if (reTryInputAddressSplit.length == 1) {
                         compareYesterday.setText("날씨 정보를 가져올 수 없는 지역입니다.");
                         return;
                     }
