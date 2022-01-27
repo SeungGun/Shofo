@@ -8,13 +8,13 @@
 
 ## Contents
 ### 1. Date & Clock
-### 2. Current location (from Naver)
-### 3. Corona (from Naver & COVID Official)
-    Domestic corona information(confirmed, dead, release)
-    Vaccine situation
+### 2. Current location (from NAVER)
+### 3. Corona (from COVID Official)
+    Domestic corona information[confirmed, dead, hospitalization] - new, accumulated
+    Domestic Vaccine situation
     Distance information
     World confirmed information
-### 4. Weather (from Naver)
+### 4. Weather (from NAVER)
     Location
     Current Temperature
     Current weather state
