@@ -177,7 +177,8 @@ public class MainActivity extends AppCompatActivity {
                         getTodayOccurrence(); // 국내 발생 현황(국내발생 및 해외유입 정보)
                         executeTimeClock(); // 시계 기능
                         getVaccineInfo(); // 백신 접종 현황 정보
-                        getCoronaInfo(); // 코로나 현황 정보
+                        getCoronaInfoInNaver(); // 코로나 현황 정보 in 네이버
+                        getCoronaInfoInOfficial(); // 코로나 현황 정보 in 공홈
                         getLiveIssuesKeywords(); // 실시간 이슈 키워드 정보
                     } else {
                         layoutRefreshButton.setVisibility(View.VISIBLE);
@@ -219,9 +220,11 @@ public class MainActivity extends AppCompatActivity {
         getTodayOccurrence(); // 국내 발생 현황(국내발생 및 해외유입 정보)
         executeTimeClock(); // 시계 기능
         getVaccineInfo(); // 백신 접종 현황 정보
-        getCoronaInfo(); // 코로나 현황 정보
+        getCoronaInfoInNaver(); // 코로나 현황 정보 in 네이버
+        getCoronaInfoInOfficial(); // 코로나 현황 정보 in 공홈
         getLiveIssuesKeywords(); // 실시간 이슈 키워드 가져오기
     }
+    /* ------------------------------------onCreate-------------------------------------------- */
 
     private final LocationListener locationListener = new LocationListener() {
         @Override
@@ -233,6 +236,12 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+    /**
+     * 현재 네트워크 연결 상태를 가져오는 메소드
+     *
+     * @return if (와이파이) 1, (모바일 데이터) 2, (연결 안됨) 3
+     * update on 2022-02-29
+     */
     public int getNetworkConnectState() {
         int TYPE_WIFI = 1;
         int TYPE_MOBILE = 2;
@@ -252,6 +261,12 @@ public class MainActivity extends AppCompatActivity {
         return TYPE_NOT_CONNECTED;
     }
 
+    /**
+     * [Thread part]
+     * 네이트의 키워드리스트를 보여주는 URL 에 요청하여 응답 JSON 을 가공하여 ListView 에 보여주도록 하는 메소드
+     * - HTTP connection
+     * update on 2022-01-29
+     */
     public void getLiveIssuesKeywords() {
         new Thread(new Runnable() {
             @Override
@@ -301,6 +316,12 @@ public class MainActivity extends AppCompatActivity {
         }).start();
     }
 
+    /**
+     * 이슈 키워드에 대한 ListView에 대한 설정을 하는 곳
+     * ListView 안에 들어가 있는 모든 Item 의 wrap content 만큼 ListView 의 높이를 정하는 작업
+     *
+     * @param listView - 높이를 다 정한 ListView
+     */
     public static void setListViewHeightBasedOnChildren(ListView listView) {
         ListAdapter listAdapter = listView.getAdapter();
         if (listAdapter == null) {
@@ -352,6 +373,11 @@ public class MainActivity extends AppCompatActivity {
 
     };
 
+    /**
+     * View 관련된 오브젝트를 포함한 모든 오브젝트들을 초기화시켜주는 메소드
+     * onCreate() 초기에 호출
+     * update on 2022-01-29
+     */
     private void initializeObjects() {
         distanceList = new ArrayList<>();
         sharedPreferences = getSharedPreferences("useCurLoc", MODE_PRIVATE);
@@ -399,6 +425,10 @@ public class MainActivity extends AppCompatActivity {
         keywordListView = findViewById(R.id.keyword_list);
     }
 
+    /**
+     * 날 것의 주소 값을 가공하여 가공한 주소를 통해 날씨를 요청하는 작업을 하는 middle bridge 메소드
+     * update on 2022-01-29
+     */
     public void getCurrentLocationWeather() {
         if (address != null) {
             String[] divide = address.split(" ");
@@ -414,6 +444,10 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * 초기 주소를 가져오기 위한 setting 및 위도와 경도를 구해서 현재 위치를 구하는 요청을 하는 메소드
+     * update on 2022-01-29
+     */
     public void getInitialLocation() {
         if (gpsTracker == null) {
             gpsTracker = new GpsTracker(this);
@@ -435,6 +469,12 @@ public class MainActivity extends AppCompatActivity {
         }).start();
     }
 
+    /**
+     * [Thread part]
+     * 코로나 공식 홈페이지에서 세부 정보 페이지에서 일일 확진자 중 국내 발생과 해외발생 값을 crawling 해오는 작업
+     * 동시에 값을 가공해서 Handler 로 전달해 view 보여주도록 함
+     * update on 2022-01-29
+     */
     public void getTodayOccurrence() {
         new Thread(new Runnable() {
             @Override
@@ -466,17 +506,21 @@ public class MainActivity extends AppCompatActivity {
             }
         }).start();
     }
-    /* ----------------onCreate()-----------------------------------------------------------*/
 
-    private void getCoronaInfo() {
+    /**
+     * [Thread part]
+     * 코로나 공식 홈페이지 메인 페이지에 있는 {일일 코로나 정보, 누적 정보} 값을 crawling 해오는 작업
+     * 값을 가공해서 Handler 로 전달하여 view 보여주도록 함
+     * update on 2022-01-29
+     */
+    private void getCoronaInfoInOfficial() {
         new Thread() {
             @Override
             public void run() {
-                Document doc = null;
+                Document officialDoc = null;
                 try {
-                    doc = Jsoup.connect("https://search.naver.com/search.naver?where=nexearch&sm=top_hty&fbm=1&ie=utf8&query=%EC%BD%94%EB%A1%9C%EB%82%98").get();
+                    officialDoc = Jsoup.connect("http://ncov.mohw.go.kr/").get();
 
-                    Document officialDoc = Jsoup.connect("http://ncov.mohw.go.kr/").get();
                     Elements officalElement = officialDoc.select("div.live_left").select("div.occurrenceStatus div.occur_graph tbody");
                     String[] todayCovidSplit = officalElement.text().trim().split(" ");
                     /**
@@ -511,8 +555,30 @@ public class MainActivity extends AppCompatActivity {
 
                     officalElement = officialDoc.select("div.live_left").select("div.occurrenceStatus h2.title1 span.livedate");
                     bundle.putString("today_std_time", officalElement.text().split(",")[0] + ")");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } finally {
+                    Message msg = handler.obtainMessage();
+                    msg.setData(bundle);
+                    handler.sendMessage(msg);
+                }
+            }
+        }.start();
+    }
 
-                    //---------------------------------------------------------------------------------------
+    /**
+     * [Thread part]
+     * 네이버에서 "코로나"를 검색했을 때 나오는 페이지에서 {일일 전세계 확진자, 누적 전세계 확진자, 세계 현황 집계 시간} 값을 crawling 해오는 작업
+     * 값을 가공하여 Handler 로 전달하여 view 를 통해 보여지도록 함
+     * update on 2022-01-29
+     */
+    private void getCoronaInfoInNaver() {
+        new Thread() {
+            @Override
+            public void run() {
+                Document doc = null;
+                try {
+                    doc = Jsoup.connect("https://search.naver.com/search.naver?where=nexearch&sm=top_hty&fbm=1&ie=utf8&query=%EC%BD%94%EB%A1%9C%EB%82%98").get();
 
                     Element contents = doc.select("div.status_info.abroad_info li.info_01").select(".info_num").first();
                     bundle.putString("world", contents.text() == null ? "데이터 에러" : contents.text() + "명");
@@ -541,6 +607,12 @@ public class MainActivity extends AppCompatActivity {
         }.start();
     }
 
+    /**
+     * [Thread part]
+     * 코로나 공식 홈페이지 메인 페이지에 있는 백신 접종 정보{1차, 2차, 3차 비율, 신규, 누적} 값을 crawling 해오는 작업
+     * 값을 가공하여 Handler 로 전달하여 view 를 통해 보여지도록 함
+     * update on 2022-01-29
+     */
     public void getVaccineInfo() {
         new Thread(new Runnable() {
             @Override
@@ -605,6 +677,12 @@ public class MainActivity extends AppCompatActivity {
         }).start();
     }
 
+    /**
+     * [Thread part]
+     * 시계를 구현해서 보여주는 곳
+     * AM | PM / 년, 월, 일, 요일 / 시:분:초
+     * update on 2022-01-29
+     */
     public void executeTimeClock() {
         new Thread() {
             @Override
@@ -652,6 +730,13 @@ public class MainActivity extends AppCompatActivity {
         }.start();
     }
 
+    /**
+     * [Thread part]
+     * 코로나 공식 홈페이지에서 js 부분에 있던 "RSS_DATA"(거리두기 정보가 담긴)를 crawling 을 한 뒤,
+     * RSS_DATA 는 코드 자체를 크롤링 한 것이므로 딱 원하는 값만 parsing 하는 작업을 함
+     * 그리고 각 정보를 ArrayList 에 담아서 view 로 보여준다.
+     * update on 2022-01-29
+     */
     public void getRegionDistanceInfo() {
         new Thread(new Runnable() {
             @Override
@@ -708,6 +793,14 @@ public class MainActivity extends AppCompatActivity {
         }).start();
     }
 
+    /**
+     * [Thread part]
+     * 네이버 API 를 이용하여 위도와 경도 값을 구한 뒤 해당 값을 여러가지 parameter 들을 조합해 요청을 한다.
+     * 요청을 하면 현 위치 상태에 따른 주소 값을 JSON 형태로 받는다.
+     * 그 JSON 데이터를 가공해서 완성된 address 를 view 에 보여준다.
+     * 그 후 해당 address 에 대한 날씨 값도 요청하는 메소드를 호출한다.
+     * update on 2022-01-29
+     */
     private void getAddressUsingNaverAPI() {
         new Thread() {
             @Override
@@ -836,7 +929,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Button Click event for Refresh Button of current location
+     * [Button Click event] for Refresh Button of current location
      *
      * @param view
      */
@@ -871,6 +964,12 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * 일렬로 나열된 백신 정보 값을 공백을 기준으로 나눈 String array 를 가져온 뒤 이를, 각 인덱스를 가져와서 문장을 만들어 주는 메소드
+     *
+     * @param vaccineSplit
+     * @return vaccineSplit 으로 받은 각 인덱스를 문장화 하여 반환
+     */
     private String processVaccineFirst(String[] vaccineSplit) {
         /**
          * updated on 2022-01-27
@@ -886,6 +985,163 @@ public class MainActivity extends AppCompatActivity {
         String cumulative = vaccineSplit[2].substring(0, 2) + " " + vaccineSplit[2].substring(2) + "명";
         String newer = vaccineSplit[3].substring(0, 2) + " " + vaccineSplit[3].substring(2) + "명";
         return title + " " + percent + "\n" + newer + "  /  " + cumulative;
+    }
+
+    /**
+     * [Thread part]
+     * 현재 위치 값을 바탕으로 혹은 입력한 주소를 바탕으로 한 날씨 정보를 가져오는 작업
+     * 네이버에 {위치} 날씨를 검색한 결과에 대해 crawling 해서 값을 가져온다.
+     * update on 2022-01-29
+     */
+    public void getWeatherOfLocation() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Document weatherDoc = null;
+                try {
+                    inputAddress = inputAddress.replace(' ', '+');
+
+                    getWeatherImageAccordingToWeather();
+
+                    weatherDoc = Jsoup.connect("https://search.naver.com/search.naver?where=nexearch&sm=top_hty&fbm=1&ie=utf8&query=" + inputAddress + "+날씨").get();
+                    final String temperature = weatherDoc.select("div.temperature_text").first().text().replace("현재 온도", ""); // 온도 정보
+                    final String tempInfo = weatherDoc.select("div.temperature_info").first().text(); // 이외 정보
+                    final String airInfo = weatherDoc.select("div.report_card_wrap").first().text(); // 대기 정보
+
+                    /**
+                     * "temperature_info" text split information (updated on 2021-11-11)
+                     * 0 : 어제보다
+                     * 1 : {n}˚
+                     * 2 : 낮아요 or 높아요
+                     * 3 : 날씨 상태(맑음, 흐림등)
+                     * 4 : 강수확률
+                     * 5 : {n}%
+                     * 6 : 습도
+                     * 7 : {n}%
+                     * 8 : 바람(##풍)
+                     * 9 : {n}m/s
+                     */
+                    String[] temps = tempInfo.split(" ");
+                    String[] airs = airInfo.split(" ");
+
+                    String cmp = temps[0] + " " + temps[1] + " " + temps[2];
+                    String stateText = temps[3];
+
+                    String rainValue = temps[5];
+                    String humidityValue = temps[7];
+
+                    String windText = temps[8];
+                    String windValue = temps[9];
+
+                    // index 1, 3, 5로 수준 값 가져오기
+                    PM10Text.setTextColor(Color.parseColor(getColorAccordingStd(airs[1])));
+                    PM2_5Text.setTextColor(Color.parseColor(getColorAccordingStd(airs[3])));
+                    ultravioletText.setTextColor(Color.parseColor(getColorAccordingStd(airs[5])));
+
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            PM10Text.setText(airs[1]);
+                            PM2_5Text.setText(airs[3]);
+                            ultravioletText.setText(airs[5]);
+                            temperatureText.setText(temperature);
+                            currentWeatherStatus.setText(stateText);
+                            compareYesterday.setText(cmp);
+                            rainPercentText.setText(rainValue);
+                            humidityPercentText.setText(humidityValue);
+                            windStateText.setText(windText + " ");
+                            windStateValueText.setText(windValue);
+                            sunsetValueText.setText(airs[7]);
+                        }
+                    });
+                } catch (Exception e) {
+                    String[] reTryInputAddressSplit = inputAddress.split("\\+");
+
+                    if (reTryInputAddressSplit.length == 1) {
+                        compareYesterday.setText("날씨 정보를 가져올 수 없는 지역입니다.");
+                        return;
+                    }
+                    StringBuilder newAddress = new StringBuilder();
+                    for (int i = 0; i < reTryInputAddressSplit.length - 1; ++i) {
+                        newAddress.append(reTryInputAddressSplit[i]);
+                        if (i == reTryInputAddressSplit.length - 2) {
+                            break;
+                        }
+                        newAddress.append("+");
+                    }
+                    inputAddress = newAddress.toString();
+                    getWeatherOfLocation();
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+
+    }
+
+    /**
+     * [Thread part]
+     * 날씨를 구하는 것에 있어서 상단 메소드와 동일함
+     * 여기서는 날씨 정보를 crawling 하는 것이 아니라 검색한 날씨에 해당하는 이미지 정보를 가져온다.
+     * image 에 해당하는 class 이름, 날씨 상태 값을 가져와서 가공한다.
+     * 해당 값을 토대로 .svg 이미지 파일을 네이버 이미지 파일이 저장된 서버에서 가져온다. (GlideToVectorYou 라이브러리 사용 -> .svg 파일)
+     * 그리고 가져온 이미지를 Image view에 저장해서 보여준다.
+     * update on 2022-01-29
+     */
+    public void getWeatherImageAccordingToWeather() {
+        new Thread() {
+            @Override
+            public void run() {
+                try {
+                    /**
+                     * Expecting value of @imageClassName : wt_icon icon_wt{number}
+                     * Image format for URL : [URL]icon_wt_{number}.svg
+                     */
+                    Document doc = Jsoup.connect("https://search.naver.com/search.naver?where=nexearch&sm=top_hty&fbm=1&ie=utf8&query=" + inputAddress + "+날씨").get();
+                    String imageClassName = doc.select("div.weather_graphic div.weather_main").select("i").attr("class");
+                    String state = imageClassName.split(" ")[1];
+                    int num = Integer.parseInt(state.split("_")[1].substring(2)); // get integer value
+
+                    final String param = num > 9 ? String.valueOf(num) : "0" + num; // int to String
+
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                GlideToVectorYou.justLoadImage(MainActivity.this, Uri.parse("https://ssl.pstatic.net/sstatic/keypage/outside/scui/weather_new/img/weather_svg/icon_wt_" + param + ".svg"), weatherImage);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    });
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }.start();
+    }
+
+    /**
+     * 날씨를 구하는데 있어 대기 관련된 수치값들에 따라 텍스트 색깔을 정해주는 메소드
+     *
+     * @param std
+     * @return 상태에 따른 색상 hex 문자열 값
+     */
+    public String getColorAccordingStd(String std) {
+        switch (std) {
+            case "좋음":
+                return "#32a1ff";
+            case "보통":
+                return "#03c75a";
+            case "나쁨":
+                return "#fd9b5a";
+            case "매우나쁨":
+                return "#ff5959";
+        }
+        return "#000000";
     }
 
     @Override
@@ -1042,141 +1298,5 @@ public class MainActivity extends AppCompatActivity {
         LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
                 || locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
-    }
-
-    public void getWeatherOfLocation() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                Document weatherDoc = null;
-                try {
-                    inputAddress = inputAddress.replace(' ', '+');
-
-                    getWeatherImageAccordingToWeather();
-
-                    weatherDoc = Jsoup.connect("https://search.naver.com/search.naver?where=nexearch&sm=top_hty&fbm=1&ie=utf8&query=" + inputAddress + "+날씨").get();
-                    final String temperature = weatherDoc.select("div.temperature_text").first().text().replace("현재 온도", ""); // 온도 정보
-                    final String tempInfo = weatherDoc.select("div.temperature_info").first().text(); // 이외 정보
-                    final String airInfo = weatherDoc.select("div.report_card_wrap").first().text(); // 대기 정보
-
-                    /**
-                     * "temperature_info" text split information (updated on 2021-11-11)
-                     * 0 : 어제보다
-                     * 1 : {n}˚
-                     * 2 : 낮아요 or 높아요
-                     * 3 : 날씨 상태(맑음, 흐림등)
-                     * 4 : 강수확률
-                     * 5 : {n}%
-                     * 6 : 습도
-                     * 7 : {n}%
-                     * 8 : 바람(##풍)
-                     * 9 : {n}m/s
-                     */
-                    String[] temps = tempInfo.split(" ");
-                    String[] airs = airInfo.split(" ");
-
-                    String cmp = temps[0] + " " + temps[1] + " " + temps[2];
-                    String stateText = temps[3];
-
-                    String rainValue = temps[5];
-                    String humidityValue = temps[7];
-
-                    String windText = temps[8];
-                    String windValue = temps[9];
-
-                    // index 1, 3, 5로 수준 값 가져오기
-                    PM10Text.setTextColor(Color.parseColor(getColorAccordingStd(airs[1])));
-                    PM2_5Text.setTextColor(Color.parseColor(getColorAccordingStd(airs[3])));
-                    ultravioletText.setTextColor(Color.parseColor(getColorAccordingStd(airs[5])));
-
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            PM10Text.setText(airs[1]);
-                            PM2_5Text.setText(airs[3]);
-                            ultravioletText.setText(airs[5]);
-                            temperatureText.setText(temperature);
-                            currentWeatherStatus.setText(stateText);
-                            compareYesterday.setText(cmp);
-                            rainPercentText.setText(rainValue);
-                            humidityPercentText.setText(humidityValue);
-                            windStateText.setText(windText + " ");
-                            windStateValueText.setText(windValue);
-                            sunsetValueText.setText(airs[7]);
-                        }
-                    });
-                } catch (Exception e) {
-                    String[] reTryInputAddressSplit = inputAddress.split("\\+");
-
-                    if (reTryInputAddressSplit.length == 1) {
-                        compareYesterday.setText("날씨 정보를 가져올 수 없는 지역입니다.");
-                        return;
-                    }
-                    StringBuilder newAddress = new StringBuilder();
-                    for (int i = 0; i < reTryInputAddressSplit.length - 1; ++i) {
-                        newAddress.append(reTryInputAddressSplit[i]);
-                        if (i == reTryInputAddressSplit.length - 2) {
-                            break;
-                        }
-                        newAddress.append("+");
-                    }
-                    inputAddress = newAddress.toString();
-                    getWeatherOfLocation();
-                    e.printStackTrace();
-                }
-            }
-        }).start();
-
-    }
-
-    public void getWeatherImageAccordingToWeather() {
-        new Thread() {
-            @Override
-            public void run() {
-                try {
-                    /**
-                     * Expecting value of @imageClassName : wt_icon icon_wt{number}
-                     * Image format for URL : [URL]icon_wt_{number}.svg
-                     */
-                    Document doc = Jsoup.connect("https://search.naver.com/search.naver?where=nexearch&sm=top_hty&fbm=1&ie=utf8&query=" + inputAddress + "+날씨").get();
-                    String imageClassName = doc.select("div.weather_graphic div.weather_main").select("i").attr("class");
-                    String state = imageClassName.split(" ")[1];
-                    int num = Integer.parseInt(state.split("_")[1].substring(2)); // get integer value
-
-                    final String param = num > 9 ? String.valueOf(num) : "0" + num; // int to String
-
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            try {
-                                GlideToVectorYou.justLoadImage(MainActivity.this, Uri.parse("https://ssl.pstatic.net/sstatic/keypage/outside/scui/weather_new/img/weather_svg/icon_wt_" + param + ".svg"), weatherImage);
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    });
-                } catch (MalformedURLException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }.start();
-    }
-
-    public String getColorAccordingStd(String std) {
-        switch (std) {
-            case "좋음":
-                return "#32a1ff";
-            case "보통":
-                return "#03c75a";
-            case "나쁨":
-                return "#fd9b5a";
-            case "매우나쁨":
-                return "#ff5959";
-        }
-        return "#000000";
     }
 }
