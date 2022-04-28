@@ -351,18 +351,18 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void handleMessage(Message msg) {
             try {
-                confirmedText.setText("확진자 →  " + (msg.getData().getString("confirmed")));
-                confirmedVarText.setText("▲ " + (msg.getData().getString("confirmed_var")));
-                releaseText.setText("신규 입원 →  " + (msg.getData().getString("release")));
-                deadText.setText("사망자 →  " + (msg.getData().getString("dead")));
-                deadVarText.setText("▲ " + (msg.getData().getString("dead_var")));
-                stdDateText.setText("※ 국내 집계 기준 " + (msg.getData().getString("today_std_time")));
-                vaccineFirstText.setText(msg.getData().getString("domestic_vaccine_first"));
-                vaccineSecondText.setText(msg.getData().getString("domestic_vaccine_second"));
-                vaccineThirdText.setText(msg.getData().getString("domestic_vaccine_third"));
-                worldConfirmedText.setText(" → " + (msg.getData().getString("world")));
-                worldConfirmedVarText.setText(" ▲ " + (msg.getData().getString("world_var")));
-                worldStdTime.setText("※ " + (msg.getData().getString("world_std_time")));
+                confirmedText.setText("확진자 →  " + (msg.getData().getString("confirmed") == null ? "" : msg.getData().getString("confirmed")));
+                confirmedVarText.setText("▲ " + (msg.getData().getString("confirmed_var") == null ? "" : msg.getData().getString("confirmed_var")));
+                releaseText.setText("신규 입원 →  " + (msg.getData().getString("release") == null ? "" : msg.getData().getString("release")));
+                deadText.setText("사망자 →  " + (msg.getData().getString("dead") == null ? "" : msg.getData().getString("dead")));
+                deadVarText.setText("▲ " + (msg.getData().getString("dead_var") == null ? "" : msg.getData().getString("dead_var")));
+                stdDateText.setText("※ 국내 집계 기준 " + (msg.getData().getString("today_std_time") == null ? "" : msg.getData().getString("today_std_time")));
+                vaccineFirstText.setText(msg.getData().getString("domestic_vaccine_first") == null ? "" : msg.getData().getString("domestic_vaccine_first"));
+                vaccineSecondText.setText(msg.getData().getString("domestic_vaccine_second") == null ? "" : msg.getData().getString("domestic_vaccine_second"));
+                vaccineThirdText.setText(msg.getData().getString("domestic_vaccine_third") == null ? "" : msg.getData().getString("domestic_vaccine_third"));
+                worldConfirmedText.setText(" → " + (msg.getData().getString("world") == null ? "" : msg.getData().getString("world")));
+                worldConfirmedVarText.setText(" ▲ " + (msg.getData().getString("world_var") == null ? "" : msg.getData().getString("world_var")));
+                worldStdTime.setText("※ " + (msg.getData().getString("world_std_time") == null ? "" : msg.getData().getString("world_std_time")));
                 DecimalFormat formatter = new DecimalFormat("###,###");
                 confirmedDetailText.setText("(국내 발생: " + (formatter.format(msg.getData().getInt("today_domestic") - msg.getData().getInt("today_abroad")))
                         + " , 해외 유입: " + (formatter.format(msg.getData().getInt("today_abroad"))) + ")");
@@ -521,8 +521,8 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     officialDoc = Jsoup.connect("http://ncov.mohw.go.kr/").get();
 
-                    Elements officialElement = officialDoc.select("div.live_left").select("div.occurrenceStatus div.occur_graph tbody");
-                    String[] todayCovidSplit = officialElement.text().trim().split(" ");
+                    Elements officalElement = officialDoc.select("div.live_left").select("div.occurrenceStatus div.occur_graph tbody");
+                    String[] todayCovidSplit = officalElement.text().trim().split(" ");
                     /**
                      * todayCovidSplit array all elements by each index
                      * [0] : "일일"
@@ -539,8 +539,8 @@ public class MainActivity extends AppCompatActivity {
                      * [11] : 확진
                      */
 
-                    officialElement = officialDoc.select("div.live_left").select("div.occurrenceStatus div.occur_num");
-                    String[] cumulativeCovidSplit = officialElement.text().replaceAll("\\(누적\\)", "").replaceAll("다운로드", "").split(" ");
+                    officalElement = officialDoc.select("div.live_left").select("div.occurrenceStatus div.occur_num");
+                    String[] cumulativeCovidSplit = officalElement.text().replaceAll("\\(누적\\)", "").replaceAll("다운로드", "").split(" ");
                     /**
                      * cumulativeCovidSplit array all elements by each index
                      * [0] : (누적)사망 n
@@ -553,8 +553,8 @@ public class MainActivity extends AppCompatActivity {
                     bundle.putString("dead", cumulativeCovidSplit[0].replace("사망", "") + "명");
                     bundle.putString("dead_var", todayCovidSplit[1]);
 
-                    officialElement = officialDoc.select("div.live_left").select("div.occurrenceStatus h2.title1 span.livedate");
-                    bundle.putString("today_std_time", officialElement.text().split(",")[0] + ")");
+                    officalElement = officialDoc.select("div.live_left").select("div.occurrenceStatus h2.title1 span.livedate");
+                    bundle.putString("today_std_time", officalElement.text().split(",")[0] + ")");
                 } catch (IOException e) {
                     e.printStackTrace();
                 } finally {
