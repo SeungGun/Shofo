@@ -20,8 +20,8 @@ public class GpsTracker extends Service implements LocationListener {
     double latitude;
     double longitude;
 
-    private static final long MIN_DISTANCE_CHANGE_FOR_UPDATES = 10; //통지사이의 최소 변경 거리 (m)
-    private static final long MIN_TIME_BW_UPDATES = 500; // 통지사이의 최소 시간 간격 (millisecond)
+    private static final long MIN_DISTANCE_CHANGE_FOR_UPDATES = 50; //통지사이의 최소 변경 거리 (m)
+    private static final long MIN_TIME_BW_UPDATES = 1500; // 통지사이의 최소 시간 간격 (millisecond)
     protected LocationManager locationManager;
 
 
