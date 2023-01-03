@@ -824,8 +824,8 @@ public class MainActivity extends AppCompatActivity {
                     urlConnection.setRequestMethod("GET");
                     urlConnection.setRequestProperty("Accept-Charset", "UTF-8");
                     urlConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded;charset=UTF-8");
-                    urlConnection.setRequestProperty("X-NCP-APIGW-API-KEY-ID", "78obj02dm7");
-                    urlConnection.setRequestProperty("X-NCP-APIGW-API-KEY", "26ZH2x2dbDxREayPjwWOziWD1ZcJOMp0aRmUiW8K");
+                    urlConnection.setRequestProperty("X-NCP-APIGW-API-KEY-ID", BuildConfig.apiKeyId);
+                    urlConnection.setRequestProperty("X-NCP-APIGW-API-KEY", BuildConfig.apiKey);
 
                     if (urlConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
                         BufferedReader reader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream(), "UTF-8"));

@@ -1,5 +1,9 @@
 apply plugin: 'com.android.application'
 
+// read from local.properties
+Properties properties = new Properties()
+properties.load(project.rootProject.file('local.properties').newDataInputStream())
+
 android {
     compileSdkVersion 32
 
@@ -11,6 +15,10 @@ android {
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        // define fields of local properties as variable
+        buildConfigField "String", "apiKeyId", properties['api.key.id']
+        buildConfigField "String", "apiKey", properties['api.key']
     }
 
     buildTypes {
@@ -19,7 +27,7 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
-    compileOptions{
+    compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
