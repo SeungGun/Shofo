@@ -1,12 +1,5 @@
 package com.example.shortinfo;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-
 import android.Manifest;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -68,6 +61,13 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -176,7 +176,7 @@ public class MainActivity extends AppCompatActivity {
                         getRegionDistanceInfo(); // 지역별 거리두기 정보
                         getTodayOccurrence(); // 국내 발생 현황(국내발생 및 해외유입 정보)
                         executeTimeClock(); // 시계 기능
-                        getVaccineInfo(); // 백신 접종 현황 정보
+//                        getVaccineInfo(); // 백신 접종 현황 정보
                         getCoronaInfoInNaver(); // 코로나 현황 정보 in 네이버
                         getCoronaInfoInOfficial(); // 코로나 현황 정보 in 공홈
                         getLiveIssuesKeywords(); // 실시간 이슈 키워드 정보
@@ -216,10 +216,10 @@ public class MainActivity extends AppCompatActivity {
         });
 
         getInitialLocation(); // 초기 위도, 경도값을 구해 주소정보 가져오기 +날씨 정보 가져오기
-        getRegionDistanceInfo(); // 지역별 거리두기 정보
-        getTodayOccurrence(); // 국내 발생 현황(국내발생 및 해외유입 정보)
+//        getRegionDistanceInfo(); // 지역별 거리두기 정보
+//        getTodayOccurrence(); // 국내 발생 현황(국내발생 및 해외유입 정보)
         executeTimeClock(); // 시계 기능
-        getVaccineInfo(); // 백신 접종 현황 정보
+//        getVaccineInfo(); // 백신 접종 현황 정보
         getCoronaInfoInNaver(); // 코로나 현황 정보 in 네이버
         getCoronaInfoInOfficial(); // 코로나 현황 정보 in 공홈
         getLiveIssuesKeywords(); // 실시간 이슈 키워드 가져오기
