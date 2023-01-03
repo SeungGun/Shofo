@@ -1,15 +1,15 @@
-# shofo
-**short information application for me**
+# Short Information
+**Mobile Application for providing short information of issues**
 
 - A lockscreen widget app that simply displays a variety of simple current events.
-- For studying web crawling.
-- Try to use Immortal Service
-- **App for my convenience**
+- used web crawling.
+- **created for my own use**
 
-## Contents
+## Functions
 ### 1. Date & Clock
-### 2. Current location (from NAVER)
-### 3. Corona (from COVID Official)
+### 2. Current Address of location (Using Naver API) 
+- Update Address in real-time according to Current Location
+### 3. COVID 19 (from COVID Official)
     Domestic corona information[confirmed, dead, hospitalization] - new, accumulated
     Domestic Vaccine situation
     Distance information
