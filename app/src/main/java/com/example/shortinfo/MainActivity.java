@@ -39,6 +39,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.shortinfo.location.GpsTracker;
 import com.example.shortinfo.timer.TimerImpl;
 import com.github.twocoffeesoneteam.glidetovectoryou.GlideToVectorYou;
 
@@ -80,7 +81,6 @@ public class MainActivity extends AppCompatActivity {
     private TextView deadVarText;
     private TextView stdDateText;
     private TextView vaccineFirstText;
-    private TextView distancingText;
     private TextView vaccineSecondText;
     private TextView vaccineThirdText;
     private TextView worldStdTime;
@@ -98,6 +98,8 @@ public class MainActivity extends AppCompatActivity {
     private TextView ultravioletText;
     private TextView compareYesterday;
     private TextView issueKeywordStdTime;
+    private TextView firstWeatherInfoText;
+    private TextView secondWeatherInfoText;
     private TextView rainPercentText;
     private TextView humidityPercentText;
     private TextView windStateText;
@@ -126,13 +128,11 @@ public class MainActivity extends AppCompatActivity {
     private String detailNumber;
     private String building;
     private String groundNumber;
-    private ArrayList<String> distanceList;
     private ArrayAdapter<String> adapter;
     private double latitude;
     private double longitude;
     private boolean useCurrentAddress = false;
 
-    public static final int DEFAULT_REGION_NUMBER = 8; //경기도
     private static final int GPS_ENABLE_REQUEST_CODE = 2001;
     private static final int PERMISSIONS_REQUEST_CODE = 100;
     public static final String[] REQUIRED_PERMISSIONS = {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION};
@@ -173,7 +173,6 @@ public class MainActivity extends AppCompatActivity {
                         backgroundScreen.setVisibility(View.GONE);
                         foregroundScreen.setVisibility(View.VISIBLE);
                         getInitialLocation(); // 초기 위도, 경도값을 구해 주소정보 가져오기 +날씨 정보 가져오기
-                        getRegionDistanceInfo(); // 지역별 거리두기 정보
                         getTodayOccurrence(); // 국내 발생 현황(국내발생 및 해외유입 정보)
                         executeTimeClock(); // 시계 기능
 //                        getVaccineInfo(); // 백신 접종 현황 정보
@@ -216,7 +215,6 @@ public class MainActivity extends AppCompatActivity {
         });
 
         getInitialLocation(); // 초기 위도, 경도값을 구해 주소정보 가져오기 +날씨 정보 가져오기
-//        getRegionDistanceInfo(); // 지역별 거리두기 정보
 //        getTodayOccurrence(); // 국내 발생 현황(국내발생 및 해외유입 정보)
         executeTimeClock(); // 시계 기능
 //        getVaccineInfo(); // 백신 접종 현황 정보
@@ -296,7 +294,7 @@ public class MainActivity extends AppCompatActivity {
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                issueKeywordStdTime.setText("※기준 시간 " + stdTime);
+                                issueKeywordStdTime.setText("※ 기준 시간:  " + stdTime);
                                 adapter = new ArrayAdapter<>(getApplicationContext(), android.R.layout.simple_list_item_1, keywordList);
                                 keywordListView.setAdapter(adapter);
                                 setListViewHeightBasedOnChildren(keywordListView);
@@ -376,10 +374,9 @@ public class MainActivity extends AppCompatActivity {
     /**
      * View 관련된 오브젝트를 포함한 모든 오브젝트들을 초기화시켜주는 메소드
      * onCreate() 초기에 호출
-     * update on 2022-01-29
+     * update on 2023-01-04
      */
     private void initializeObjects() {
-        distanceList = new ArrayList<>();
         sharedPreferences = getSharedPreferences("useCurLoc", MODE_PRIVATE);
         editor = sharedPreferences.edit();
         bundle = new Bundle();
@@ -400,7 +397,6 @@ public class MainActivity extends AppCompatActivity {
         vaccineFirstText = findViewById(R.id.corona_text_vaccine_first);
         vaccineSecondText = findViewById(R.id.corona_text_vaccine_second);
         vaccineThirdText = findViewById(R.id.corona_text_vaccine_third);
-        distancingText = findViewById(R.id.corona_text_distancing);
         worldConfirmedText = findViewById(R.id.corona_text_world);
         worldConfirmedVarText = findViewById(R.id.corona_text_world_var);
         worldStdTime = findViewById(R.id.corona_text_world_std_time);
@@ -423,6 +419,8 @@ public class MainActivity extends AppCompatActivity {
         sunsetValueText = findViewById(R.id.sunset_value);
         issueKeywordStdTime = findViewById(R.id.issue_std_time);
         keywordListView = findViewById(R.id.keyword_list);
+        firstWeatherInfoText = findViewById(R.id.tv_first_info_title);
+        secondWeatherInfoText = findViewById(R.id.tv_second_info_title);
     }
 
     /**
@@ -716,69 +714,6 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * [Thread part]
-     * 코로나 공식 홈페이지에서 js 부분에 있던 "RSS_DATA"(거리두기 정보가 담긴)를 crawling 을 한 뒤,
-     * RSS_DATA 는 코드 자체를 크롤링 한 것이므로 딱 원하는 값만 parsing 하는 작업을 함
-     * 그리고 각 정보를 ArrayList 에 담아서 view 로 보여준다.
-     * update on 2022-01-29
-     */
-    public void getRegionDistanceInfo() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                Document coronaUrl = null;
-                try {
-                    coronaUrl = Jsoup.connect("http://ncov.mohw.go.kr/regSocdisBoardView.do?brdId=6&brdGubun=68&ncvContSeq=495").get();
-
-                    Elements scripts = coronaUrl.getElementsByTag("script");
-                    if (scripts.text() == null) {
-                        distanceList.add("데이터 에러");
-                        return;
-                    }
-                    for (Element e : scripts) {
-                        if (e.data().contains("RSS_DATA")) {
-                            int idx_begin = e.data().indexOf("RSS_DATA");
-                            String front = e.data().substring(idx_begin);
-
-                            int idx_end = front.indexOf(";");
-
-                            String cutStr = front.substring(0, idx_end + 1);
-                            cutStr = cutStr.replaceAll(" ", "");
-                            cutStr = cutStr.replace("\n", "");
-
-                            String[] temp = cutStr.split("\\{");
-
-                            // index 0번은 "RSS_DATA = [" 이기 때문에 index 1번부터
-                            for (int i = 1; i < temp.length; ++i) {
-                                int be = temp[i].indexOf("-"); // -부터
-                                int end = temp[i].substring(be).indexOf("}"); // }까지 구분하기 위한 index 구하기
-
-                                String endStr = temp[i].substring(be, be + end);
-                                endStr = endStr.replace("'", ""); // ' 제거
-                                endStr = endStr.replaceAll("<br/>", ""); // <br/> 제거
-
-                                String first = endStr.substring(0, 3);
-                                String second = endStr.substring(3);
-                                String complete = first + " " + second;
-                                distanceList.add(complete);
-                            }
-                            break;
-                        }
-                    }
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            distancingText.setText("※ 거리두기 " + distanceList.get(DEFAULT_REGION_NUMBER));
-                        }
-                    });
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }).start();
-    }
-
-    /**
-     * [Thread part]
      * 네이버 API 를 이용하여 위도와 경도 값을 구한 뒤 해당 값을 여러가지 parameter 들을 조합해 요청을 한다.
      * 요청을 하면 현 위치 상태에 따른 주소 값을 JSON 형태로 받는다.
      * 그 JSON 데이터를 가공해서 완성된 address 를 view 에 보여준다.
@@ -1011,7 +946,10 @@ public class MainActivity extends AppCompatActivity {
                     String cmp = temps[0] + " " + temps[1] + " " + temps[2];
                     String stateText = temps[3];
 
+                    String firstInfoTitle = temps[4] + " ";
                     String rainValue = temps[5];
+
+                    String secondInfoTitle = temps[6] + " ";
                     String humidityValue = temps[7];
 
                     String windText = temps[8];
@@ -1031,6 +969,8 @@ public class MainActivity extends AppCompatActivity {
                             temperatureText.setText(temperature);
                             currentWeatherStatus.setText(stateText);
                             compareYesterday.setText(cmp);
+                            firstWeatherInfoText.setText(firstInfoTitle);
+                            secondWeatherInfoText.setText(secondInfoTitle);
                             rainPercentText.setText(rainValue);
                             humidityPercentText.setText(humidityValue);
                             windStateText.setText(windText + " ");
@@ -1137,19 +1077,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.distance_location:
-                AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                builder.setTitle("거리두기 지역 설정");
-                builder.setItems(R.array.Region, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        int[] indexItems = getResources().getIntArray(R.array.Region_index);
-                        distancingText.setText("※ 거리두기 " + distanceList.get(indexItems[which]));
-                    }
-                });
-                AlertDialog alertDialog = builder.create();
-                alertDialog.show();
-                return true;
             case R.id.weather_location:
                 FrameLayout container = new FrameLayout(this);
                 FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);

@@ -55,7 +55,7 @@ public class TimerImpl implements Timer {
      */
     @Override
     public String getFormattedDate(int year, int month, int day) {
-        return year + "년" + (month + 1) + "월 " + day + "일";
+        return year + "년 " + (month + 1) + "월 " + day + "일";
     }
 
     /**
