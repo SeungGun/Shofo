@@ -1,5 +1,19 @@
 <resources>
     <string name="app_name">shortinfo</string>
+    <string name="set_weather_location">날씨 위치 설정</string>
+    <string name="title_corona_world">전 세계 확진자</string>
+    <string name="slash_space">/</string>
+    <string name="humidity">습도</string>
+    <string name="fine_dust">미세먼지</string>
+    <string name="ultra_fine_dust">초미세먼지</string>
+    <string name="ultraviolet">자외선</string>
+    <string name="sunset">일몰</string>
+    <string name="real_time_issue_keyword">* 실시간 이슈 키워드</string>
+    <string name="rain_prob">강수확률</string>
+    <string name="title_weather">* 날씨</string>
+    <string name="title_corona">* 코로나</string>
+    <string name="network_error">네트워크 연결이 되어 있지 않습니다!</string>
+    <string name="current_location">현재 위치</string>
     <string-array name="Region">
         <item>서울</item>
         <item>부산</item>

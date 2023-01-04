@@ -61,18 +61,19 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal">
                 <TextView
-                    android:layout_margin="3dp"
+                    android:layout_margin="4dp"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="현재 위치"
-                    android:textSize="10pt"
+                    android:text="@string/current_location"
+                    android:textSize="9pt"
+                    android:textStyle="bold"
                     android:textColor="#000000"/>
                 <Button
                     android:onClick="onGetAddress"
-                    android:layout_marginTop="2dp"
+                    android:layout_marginTop="3dp"
                     android:id="@+id/refresh_location"
-                    android:layout_width="30dp"
-                    android:layout_height="30dp"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
                     android:background="@drawable/ic_baseline_refresh_24"/>
             </LinearLayout>
 
@@ -83,7 +84,7 @@
                 android:layout_height="wrap_content"
                 android:textColor="#000000"
                 android:textStyle="bold"
-                android:textSize="9pt"
+                android:textSize="8pt"
                 android:padding="5dp"/>
 
             <ProgressBar
@@ -106,7 +107,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:gravity="center"
-                android:text="네트워크 연결이 되어 있지 않습니다!"
+                android:text="@string/network_error"
                 android:textColor="#000000"
                 android:textStyle="bold"
                 android:layout_margin="5dp"
@@ -134,12 +135,12 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="* 코로나"
+            android:text="@string/title_corona"
             android:textStyle="bold"
             android:textColor="#000000"
             android:textSize="13pt"
-            android:layout_marginLeft="15dp"
-            android:layout_marginTop="6dp"/>
+            android:layout_marginStart="15dp"
+            android:layout_marginTop="12dp"/>
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -150,7 +151,7 @@
                 android:id="@+id/corona_std_date"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="9pt"
+                android:textSize="8pt"
                 android:textStyle="bold"
                 android:textColor="#000000"
                 android:padding="8dp"/>
@@ -285,7 +286,7 @@
                     android:layout_height="wrap_content"
                     android:textSize="11pt"
                     android:textStyle="bold"
-                    android:text="전 세계 확진자"
+                    android:text="@string/title_corona_world"
                     android:textColor="#000000"
                     android:padding="8dp"/>
                 <LinearLayout
@@ -313,30 +314,22 @@
                     android:id="@+id/corona_text_world_std_time"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="8pt"
+                    android:textSize="7pt"
                     android:textStyle="bold"
                     android:textColor="#000000"
                     android:padding="8dp"/>
             </LinearLayout>
-            <TextView
-                android:id="@+id/corona_text_distancing"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="8.5pt"
-                android:textStyle="bold"
-                android:textColor="#41A541"
-                android:padding="6dp"/>
         </LinearLayout>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="* 날씨"
+            android:text="@string/title_weather"
             android:textStyle="bold"
             android:textColor="#000000"
             android:textSize="13pt"
-            android:layout_marginLeft="15dp"
-            android:layout_marginTop="3dp"/>
+            android:layout_marginStart="15dp"
+            android:layout_marginTop="12dp"/>
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -352,7 +345,7 @@
                     android:layout_width="0px"
                     android:layout_weight="8"
                     android:layout_height="wrap_content"
-                    android:textSize="14pt"
+                    android:textSize="13pt"
                     android:textColor="#000000"
                     android:padding="6dp"/>
                 <ImageButton
@@ -379,14 +372,14 @@
                     android:id="@+id/temperature"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="25pt"
+                    android:textSize="24pt"
                     android:textColor="#000000"
                     android:textStyle="bold"
                     android:padding="6dp"
                     android:layout_marginBottom="5dp"/>
 
                 <LinearLayout
-                    android:layout_marginLeft="5dp"
+                    android:layout_marginStart="5dp"
                     android:layout_gravity="center"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -406,7 +399,7 @@
                 android:id="@+id/cmp_yesterday"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textSize="13pt"
+                android:textSize="12pt"
                 android:textColor="#000000"
                 android:padding="6dp"/>
 
@@ -416,53 +409,53 @@
                 android:orientation="horizontal"
                 android:layout_gravity="center">
                 <TextView
+                    android:id="@+id/tv_first_info_title"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="강수확률 "
-                    android:textSize="9.5pt"
+                    android:textSize="9pt"
                     />
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/rain_percent_value"
                     android:textStyle="bold"
-                    android:textSize="9.5pt"
+                    android:textSize="9pt"
                     android:textColor="#000000"
-                    android:layout_marginRight="5dp"/>
+                    android:layout_marginEnd="5dp"/>
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="9.5pt"
-                    android:text="/ "/>
+                    android:textSize="9pt"
+                    android:text="@string/slash_space"/>
                 <TextView
+                    android:id="@+id/tv_second_info_title"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="습도 "
-                    android:textSize="9.5pt" />
+                    android:textSize="9pt" />
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/humidity_percent_value"
                     android:textStyle="bold"
-                    android:textSize="9.5pt"
+                    android:textSize="9pt"
                     android:textColor="#000000"
-                    android:layout_marginRight="5dp"/>
+                    android:layout_marginEnd="5dp"/>
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="9.5pt"
-                    android:text="/ "/>
+                    android:textSize="9pt"
+                    android:text="@string/slash_space"/>
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/wind_state"
-                    android:textSize="9.5pt" />
+                    android:textSize="9pt" />
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/wind_state_value"
                     android:textStyle="bold"
-                    android:textSize="9.5pt"
+                    android:textSize="9pt"
                     android:textColor="#000000"/>
             </LinearLayout>
 
@@ -475,7 +468,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="미세먼지"
+                    android:text="@string/fine_dust"
                     android:textSize="8pt"
                     android:padding="3dp"
                     android:textColor="#000000"
@@ -496,7 +489,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="초미세먼지"
+                    android:text="@string/ultra_fine_dust"
                     android:textSize="8pt"
                     android:textColor="#000000"
                     android:padding="3dp"
@@ -516,7 +509,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="자외선"
+                    android:text="@string/ultraviolet"
                     android:textSize="8pt"
                     android:textColor="#000000"
                     android:padding="3dp"
@@ -545,9 +538,9 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="일몰 "
+                    android:text="@string/sunset"
                     android:textStyle="bold"
-                    android:textSize="10pt"
+                    android:textSize="9pt"
                     android:gravity="center"
                     />
                 <TextView
@@ -555,7 +548,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textStyle="bold"
-                    android:textSize="10pt"
+                    android:textSize="9pt"
                     android:textColor="#fd9b5a"/>
             </LinearLayout>
 
@@ -564,12 +557,12 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="* 실시간 이슈 키워드"
+            android:text="@string/real_time_issue_keyword"
             android:textStyle="bold"
             android:textColor="#000000"
             android:textSize="13pt"
-            android:layout_marginLeft="15dp"
-            android:layout_marginTop="3dp"/>
+            android:layout_marginStart="15dp"
+            android:layout_marginTop="12dp"/>
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -582,7 +575,8 @@
                 android:id="@+id/issue_std_time"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textSize="10pt"
+                android:textSize="9pt"
+                android:textStyle="bold"
                 android:textColor="#000000"
                 android:padding="6dp"/>
 
@@ -600,7 +594,6 @@
         </LinearLayout>
         </LinearLayout>
     </LinearLayout>
-
 
 </ScrollView>
 
