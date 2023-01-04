@@ -39,6 +39,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.shortinfo.timer.TimerImpl;
 import com.github.twocoffeesoneteam.glidetovectoryou.GlideToVectorYou;
 
 import org.json.JSONException;
@@ -135,7 +136,6 @@ public class MainActivity extends AppCompatActivity {
     private static final int GPS_ENABLE_REQUEST_CODE = 2001;
     private static final int PERMISSIONS_REQUEST_CODE = 100;
     public static final String[] REQUIRED_PERMISSIONS = {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION};
-    public static final String[] WEEKS = {"일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"};
     public SharedPreferences sharedPreferences;
     public SharedPreferences.Editor editor;
 
@@ -681,44 +681,28 @@ public class MainActivity extends AppCompatActivity {
      * [Thread part]
      * 시계를 구현해서 보여주는 곳
      * AM | PM / 년, 월, 일, 요일 / 시:분:초
-     * update on 2022-01-29
+     * update on 2023-01-04
      */
     public void executeTimeClock() {
         new Thread() {
             @Override
             public void run() {
                 while (!isInterrupted()) {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Calendar calendar = Calendar.getInstance();
-                            boolean isPM = false;
-                            int year = calendar.get(Calendar.YEAR);
-                            int month = calendar.get(Calendar.MONTH); // 1월 : 0
-                            int day = calendar.get(Calendar.DAY_OF_MONTH);
-                            int week = calendar.get(Calendar.DAY_OF_WEEK);
-                            int hour = calendar.get(Calendar.HOUR_OF_DAY);
-                            int minute = calendar.get(Calendar.MINUTE);
-                            int second = calendar.get(Calendar.SECOND);
-                            if (hour >= 12) {
-                                isPM = true;
-                            } else {
-                                isPM = false;
-                            }
-                            currentDate.setText(year + "년 " + (month + 1) + "월 " + day + "일");
-                            String colors;
-                            if (WEEKS[week - 1].equals("일요일")) {
-                                colors = "#FF0000";
-                            } else if (WEEKS[week - 1].equals("토요일")) {
-                                colors = "#3CA0E1";
-                            } else {
-                                colors = "#000000";
-                            }
-                            currentWeeks.setTextColor(Color.parseColor(colors));
-                            currentWeeks.setText(WEEKS[week - 1]);
-                            currentTime.setText((isPM ? "오후 " + (hour == 12 ? hour : (hour - 12)) : " 오전 " + (hour == 0 ? 12 : hour)) + ":"
-                                    + (minute < 10 ? "0" + minute : minute) + ":" + (second < 10 ? "0" + second : second));
-                        }
+                    runOnUiThread(() -> {
+                        Calendar calendar = Calendar.getInstance(); // 현재 날짜 및 시간에 대한 객체 가져오기
+
+                        int year = calendar.get(Calendar.YEAR);
+                        int month = calendar.get(Calendar.MONTH); // 1월 : 0
+                        int day = calendar.get(Calendar.DAY_OF_MONTH);
+                        int week = calendar.get(Calendar.DAY_OF_WEEK);
+                        int hour = calendar.get(Calendar.HOUR_OF_DAY);
+                        int minute = calendar.get(Calendar.MINUTE);
+                        int second = calendar.get(Calendar.SECOND);
+
+                        currentDate.setText(TimerImpl.getInstance().getFormattedDate(year, month, day));
+                        currentWeeks.setTextColor(Color.parseColor(TimerImpl.getInstance().getColorAccordingToDayOfWeek(week)));
+                        currentWeeks.setText(TimerImpl.getInstance().WEEKS[week - 1]);
+                        currentTime.setText(TimerImpl.getInstance().getFormattedTime(hour, minute, second));
                     });
                     try {
                         Thread.sleep(1000);
