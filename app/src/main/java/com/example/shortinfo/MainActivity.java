@@ -80,9 +80,6 @@ public class MainActivity extends AppCompatActivity {
     private TextView deadText;
     private TextView deadVarText;
     private TextView stdDateText;
-    private TextView vaccineFirstText;
-    private TextView vaccineSecondText;
-    private TextView vaccineThirdText;
     private TextView worldStdTime;
     private TextView currentTime;
     private TextView currentDate;
@@ -116,9 +113,6 @@ public class MainActivity extends AppCompatActivity {
 
     private LinearLayout backgroundScreen;
     private LinearLayout foregroundScreen;
-    private String vaccineFirst;
-    private String vaccineSecond;
-    private String vaccineThird;
     private String address;
     private String inputAddress;
     private String area1;
@@ -175,7 +169,6 @@ public class MainActivity extends AppCompatActivity {
                         getInitialLocation(); // 초기 위도, 경도값을 구해 주소정보 가져오기 +날씨 정보 가져오기
                         getTodayOccurrence(); // 국내 발생 현황(국내발생 및 해외유입 정보)
                         executeTimeClock(); // 시계 기능
-//                        getVaccineInfo(); // 백신 접종 현황 정보
                         getCoronaInfoInNaver(); // 코로나 현황 정보 in 네이버
                         getCoronaInfoInOfficial(); // 코로나 현황 정보 in 공홈
                         getLiveIssuesKeywords(); // 실시간 이슈 키워드 정보
@@ -217,7 +210,6 @@ public class MainActivity extends AppCompatActivity {
         getInitialLocation(); // 초기 위도, 경도값을 구해 주소정보 가져오기 +날씨 정보 가져오기
 //        getTodayOccurrence(); // 국내 발생 현황(국내발생 및 해외유입 정보)
         executeTimeClock(); // 시계 기능
-//        getVaccineInfo(); // 백신 접종 현황 정보
         getCoronaInfoInNaver(); // 코로나 현황 정보 in 네이버
         getCoronaInfoInOfficial(); // 코로나 현황 정보 in 공홈
         getLiveIssuesKeywords(); // 실시간 이슈 키워드 가져오기
@@ -355,9 +347,6 @@ public class MainActivity extends AppCompatActivity {
                 deadText.setText("사망자 →  " + (msg.getData().getString("dead") == null ? "" : msg.getData().getString("dead")));
                 deadVarText.setText("▲ " + (msg.getData().getString("dead_var") == null ? "" : msg.getData().getString("dead_var")));
                 stdDateText.setText("※ 국내 집계 기준 " + (msg.getData().getString("today_std_time") == null ? "" : msg.getData().getString("today_std_time")));
-                vaccineFirstText.setText(msg.getData().getString("domestic_vaccine_first") == null ? "" : msg.getData().getString("domestic_vaccine_first"));
-                vaccineSecondText.setText(msg.getData().getString("domestic_vaccine_second") == null ? "" : msg.getData().getString("domestic_vaccine_second"));
-                vaccineThirdText.setText(msg.getData().getString("domestic_vaccine_third") == null ? "" : msg.getData().getString("domestic_vaccine_third"));
                 worldConfirmedText.setText(" → " + (msg.getData().getString("world") == null ? "" : msg.getData().getString("world")));
                 worldConfirmedVarText.setText(" ▲ " + (msg.getData().getString("world_var") == null ? "" : msg.getData().getString("world_var")));
                 worldStdTime.setText("※ " + (msg.getData().getString("world_std_time") == null ? "" : msg.getData().getString("world_std_time")));
@@ -394,9 +383,6 @@ public class MainActivity extends AppCompatActivity {
         deadText = findViewById(R.id.corona_text_dead);
         deadVarText = findViewById(R.id.corona_text_dead_var);
         stdDateText = findViewById(R.id.corona_std_date);
-        vaccineFirstText = findViewById(R.id.corona_text_vaccine_first);
-        vaccineSecondText = findViewById(R.id.corona_text_vaccine_second);
-        vaccineThirdText = findViewById(R.id.corona_text_vaccine_third);
         worldConfirmedText = findViewById(R.id.corona_text_world);
         worldConfirmedVarText = findViewById(R.id.corona_text_world_var);
         worldStdTime = findViewById(R.id.corona_text_world_std_time);
@@ -607,76 +593,6 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * [Thread part]
-     * 코로나 공식 홈페이지 메인 페이지에 있는 백신 접종 정보{1차, 2차, 3차 비율, 신규, 누적} 값을 crawling 해오는 작업
-     * 값을 가공하여 Handler 로 전달하여 view 를 통해 보여지도록 함
-     * update on 2022-01-29
-     */
-    public void getVaccineInfo() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                Document vaccineUrl = null;
-                try {
-                    // 코로나 백신
-                    vaccineUrl = Jsoup.connect("http://ncov.mohw.go.kr/").get();
-                    Elements elements;
-                    elements = vaccineUrl.select("div.liveboard_layout").select("div.vaccine_list");
-                    /** HTML of vaccine information is changed (updated on 2022-01-27)
-                     *  변경 전 : elements안에 두개의 데이터가 있었음
-                     *  → 1차 접종, 2차 접종 {비율, 신규 인구수, 총 인구수}
-                     *
-                     * 변경 후 : elements 텍스트안에 모든 데이터가 다 담겨져 있음
-                     *  → 전국 1차 접종, 전국 2차 접종, 전국 3차 접종 {비율, 신규 인구수}
-                     *  {"전국"}을 기준으로 split 함
-                     *  split 결과 : Length = 4 (0번째 인덱스의 경우 empty string 으로 추측)
-                     *
-                     *  ※ 2차 변경 후 : 네이버 → 코로나 공식 홈페이지로 변경
-                     */
-                    if (elements.text() == null) {
-                        bundle.putString("domestic_vaccine_first", "데이터 에러");
-                        bundle.putString("domestic_vaccine_second", "데이터 에러");
-                        bundle.putString("domestic_vaccine_third", "데이터 에러");
-                        return;
-                    }
-
-                    String tmp = elements.text().trim();
-                    String[] split = tmp.split(" ");
-                    /**
-                     * ※ split array all elements by each index
-                     * [0] : "1차접종"
-                     * [1] : 1차 접종 비율
-                     * [2] : 1차 접종 누적
-                     * [3] : 1차 접종 신규
-                     * [4] : "2차접종"
-                     * [5] : 2차 접종 비율
-                     * [6] : 2차 접종 누적
-                     * [7] : 2차 접종 신규
-                     * [8] : "3차접종"
-                     * [9] : 3차 접종 비율
-                     * [10] : 3차 접종 누적
-                     * [11] : 3차 접종 신규
-                     * [12] : 3차 접종 60세 이상 비율
-                     */
-                    vaccineFirst = "전국 " + processVaccineFirst(Arrays.copyOfRange(split, 0, 4)); // split 의 0 ~ 3 범위의 배열 복제
-                    vaccineSecond = "전국 " + processVaccineFirst(Arrays.copyOfRange(split, 4, 8)); // split 의 4 ~ 7 범위의 배열 복제
-                    vaccineThird = "전국 " + processVaccineFirst(Arrays.copyOfRange(split, 8, 12)); // split 의 8 ~ 11 범위의 배열 복제
-
-                    bundle.putString("domestic_vaccine_first", vaccineFirst);
-                    bundle.putString("domestic_vaccine_second", vaccineSecond);
-                    bundle.putString("domestic_vaccine_third", vaccineThird);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } finally {
-                    Message msg = handler.obtainMessage();
-                    msg.setData(bundle);
-                    handler.sendMessage(msg);
-                }
-            }
-        }).start();
-    }
-
-    /**
-     * [Thread part]
      * 시계를 구현해서 보여주는 곳
      * AM | PM / 년, 월, 일, 요일 / 시:분:초
      * update on 2023-01-04
@@ -881,29 +797,6 @@ public class MainActivity extends AppCompatActivity {
         } else {
             currentLocation.setText("위치 서비스를 사용할 수 없습니다. 재시도 바랍니다.");
         }
-    }
-
-    /**
-     * 일렬로 나열된 백신 정보 값을 공백을 기준으로 나눈 String array 를 가져온 뒤 이를, 각 인덱스를 가져와서 문장을 만들어 주는 메소드
-     *
-     * @param vaccineSplit
-     * @return vaccineSplit 으로 받은 각 인덱스를 문장화 하여 반환
-     */
-    private String processVaccineFirst(String[] vaccineSplit) {
-        /**
-         * updated on 2022-01-27
-         * 1. changed entire logic according to change of vaccine information
-         * 2. added defensive part
-         * 3. changed parameter name
-         */
-        if (vaccineSplit == null || vaccineSplit.length == 0) {
-            return "None";
-        }
-        String title = vaccineSplit[0];
-        String percent = vaccineSplit[1];
-        String cumulative = vaccineSplit[2].substring(0, 2) + " " + vaccineSplit[2].substring(2) + "명";
-        String newer = vaccineSplit[3].substring(0, 2) + " " + vaccineSplit[3].substring(2) + "명";
-        return title + " " + percent + "\n" + newer + "  /  " + cumulative;
     }
 
     /**
